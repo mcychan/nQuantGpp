@@ -7,7 +7,9 @@ PNG8 or PNG1 is used because it's the only widely supported format which can sto
 For Windows users, it is assumed that you have downloaded and extracted OpenCV 4 to the public user folder %PUBLIC%.<br />
 In addition, nQuantGpp depends on OpenCV library opencv_world4xx.dll, it also required opencv_videoio_ffmpeg4xx_64.dll to open gif files.<br />
 For Linux users, please refer to Dockerfile to install libopencv-dev and compile by CMake.<br />
-
+If you are using the command line. Assuming you are in the same directory as nQuantGpp.exe, you could enter: `nQuantGpp yourImage.jpg /m 16`.<br/>
+To avoid dot gain, `/d n` can set the dithering to false. However, false contours will be resulted for gradient color zones.<br />
+nQuantGpp will quantize yourImage.jpg and create yourImage-PNNLABquant16.png in the same directory.<br /><br />
 Let's catch up with the races: Ready, Go!!!
 
 <p>Original photo of sailing<br /><img src="https://mcychan.github.io/PnnQuant.js/demo/img/sailing_2020.jpg" /></p>
@@ -18,10 +20,6 @@ Let's catch up with the races: Ready, Go!!!
 <hr />
 Most color quantization algorithms are based on K-Means clustering, can you see the minor but significant color is loss for the NeuQuant Neural-Net Quantization Algorithm?<br />
 However, keeping the minor but significant color which in terms giving rise to false contours because some dominant colors are not selected into palette.<br />
-
-If you are using the command line. Assuming you are in the same directory as nQuantGpp.exe, you could enter: `nQuantGpp yourImage.jpg /m 16`.<br/>
-To avoid dot gain, `/d n` can set the dithering to false. However, false contours will be resulted for gradient color zones.<br />
-nQuantGpp will quantize yourImage.jpg and create yourImage-PNNLABquant16.png in the same directory.<br />
 
 To select the most fitted palette, firstly reducing the color depth to 16 bits ARGB4444 suits best for semi-transparent images.<br />
 This means the value of alpha less than 16 will be converted as transparent color. For images having alpha channel value either 255 or 0, ARGB1555 is preferred.<br />
