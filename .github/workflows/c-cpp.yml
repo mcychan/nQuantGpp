@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        opencv: [ '4.5.5', '4.6.0', '4.7.0' ]
+        opencv: [ '4.7.0' ]
     name: OpenCV ${{ matrix.opencv }}
     steps:
       - uses: actions/checkout@v3
