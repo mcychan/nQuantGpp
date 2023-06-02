@@ -402,7 +402,7 @@ namespace Dl3Quant
 				swap(palette.at<Vec4b>(0, 0), palette.at<Vec4b>(1, 0));
 		}
 		ProcessImagePixels(bytes, palette, qPixels, m_transparentPixelIndex >= 0);
-		return Mat{};
+		return palette;
 	}
 
 }

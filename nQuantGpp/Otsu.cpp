@@ -222,7 +222,7 @@ namespace OtsuThreshold
 	}
 
 
-	void Otsu::ConvertGrayScaleToBinary(const Mat srcImg, vector<uchar>& bytes, bool isGrayscale)
+	Mat Otsu::ConvertGrayScaleToBinary(const Mat srcImg, vector<uchar>& bytes, bool isGrayscale)
 	{		
 		auto bitmapWidth = srcImg.cols;
 		auto bitmapHeight = srcImg.rows;
@@ -256,5 +256,6 @@ namespace OtsuThreshold
 
 		nearestMap.clear();
 		ProcessImagePixels(bytes, palette, qPixels, m_transparentPixelIndex >= 0);
+		return palette;
 	}
 }

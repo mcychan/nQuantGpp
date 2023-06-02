@@ -1571,6 +1571,6 @@ namespace MedianCutQuant
 		nearestMap.clear();
 
 		ProcessImagePixels(bytes, palette, qPixels, m_transparentPixelIndex >= 0);
-		return Mat{};
+		return palette;
 	}
 }

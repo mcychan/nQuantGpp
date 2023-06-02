@@ -1023,7 +1023,7 @@ namespace SpatialQuant
 		Mat1b qPixels(bitmapHeight, bitmapWidth);
 		if (!spatial_color_quant(pixels4b, filter3_weights, qPixels, palette)) {
 			pixelMap.clear();
-			return Mat{};
+			return pal;
 		}		
 
 		nMaxColors = palette.size();
@@ -1070,7 +1070,7 @@ namespace SpatialQuant
 		pixelMap.clear();
 
 		ProcessImagePixels(bytes, pal, qPixels, m_transparentPixelIndex >= 0);
-		return Mat{};
+		return pal;
 	}
 
 }

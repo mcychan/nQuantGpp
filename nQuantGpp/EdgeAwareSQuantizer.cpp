@@ -770,7 +770,7 @@ namespace EdgeAwareSQuant
 
 		pixelMap.clear();
 		ProcessImagePixels(bytes, pal, qPixels, m_transparentPixelIndex >= 0);
-		return Mat{};
+		return pal;
 	}
 
 }
