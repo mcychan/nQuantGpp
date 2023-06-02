@@ -4,7 +4,7 @@ nQuantGpp also provides a command line wrapper in case you want to use it from t
 
 <p align="justify">nQuantGpp is ported from nQuantCpp which migrates to OpenCV to leverage the deep learning features of such popular library.<br />
 PNG8 or PNG1 is used because it's the only widely supported format which can store partially transparent images.</p>
-<p align="justify">For Windows users, it is assumed that you have downloaded and extracted OpenCV 4 to the public user folder %PUBLIC%.<br />
+<p>For Windows users, it is assumed that you have downloaded and extracted OpenCV 4 to the public user folder %PUBLIC%.<br />
 In addition, nQuantGpp depends on OpenCV library opencv_world4xx.dll, it also required opencv_videoio_ffmpeg4xx_64.dll to open gif files.</p>
 <p align="justify">For Linux users, please refer to Dockerfile to install libopencv-dev and compile by CMake.</p>
 <p align="justify">If you are using the command line. Assuming you are in the same directory as nQuantGpp.exe, you could enter: `nQuantGpp yourImage.jpg /m 16`. To avoid dot gain, `/d n` can set the dithering to false. However, false contours will be resulted for gradient color zones.<br />
