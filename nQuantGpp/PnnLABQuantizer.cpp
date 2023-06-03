@@ -247,7 +247,7 @@ namespace PnnLABQuant
 				ratio = min(1.0, 1.0 - weight);
 			else if (proportional > .04)
 				ratio = min(1.0, weight * exp(2.44));
-			else if (proportional > .03)
+			else if (proportional > .028)
 				ratio = min(1.0, weight * exp(3.225));
 			else {
 				auto beta = (maxbins % 2 == 0) ? 2 : 1;
