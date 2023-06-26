@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 WORKDIR /tmp
 RUN apt update -y
-RUN apt install -y build-essential cmake g++
+RUN apt install -y build-essential cmake g++ libomp-dev
 RUN DEBIAN_FRONTEND="noninteractive" apt install -y libopencv-dev
 ADD . /tmp/nQuantGpp
 WORKDIR /tmp/nQuantGpp
