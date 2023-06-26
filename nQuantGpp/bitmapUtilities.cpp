@@ -480,7 +480,7 @@ bool GrabPixels(const Mat source, Mat4b pixels, int& semiTransCount, int& transp
 				pixel = Vec4b(pixelBlue, pixelGreen, pixelRed, pixelAlpha);
 			}
 
-			if (pixelAlpha < alphaThreshold) {
+			if (pixelAlpha < 0xE0) {
 				if (pixelAlpha == 0) {
 					transparentPixelIndex = pixelIndex;
 					if (nMaxColors > 2)

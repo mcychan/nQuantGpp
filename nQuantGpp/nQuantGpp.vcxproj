@@ -116,6 +116,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -134,6 +135,7 @@
       <AdditionalIncludeDirectories>C:\Users\Public\opencv\build\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -150,10 +152,14 @@
     <ClInclude Include="DivQuantizer.h" />
     <ClInclude Include="Dl3Quantizer.h" />
     <ClInclude Include="EdgeAwareSQuantizer.h" />
+    <ClInclude Include="ga\APNsgaIII.h" />
+    <ClInclude Include="ga\Chromosome.h" />
+    <ClInclude Include="ga\NsgaIII.h" />
     <ClInclude Include="GilbertCurve.h" />
     <ClInclude Include="MedianCut.h" />
     <ClInclude Include="NeuQuantizer.h" />
     <ClInclude Include="Otsu.h" />
+    <ClInclude Include="PnnLABGAQuantizer.h" />
     <ClInclude Include="PnnLABQuantizer.h" />
     <ClInclude Include="PnnQuantizer.h" />
     <ClInclude Include="SpatialQuantizer.h" />
@@ -167,11 +173,14 @@
     <ClCompile Include="DivQuantizer.cpp" />
     <ClCompile Include="Dl3Quantizer.cpp" />
     <ClCompile Include="EdgeAwareSQuantizer.cpp" />
+    <ClCompile Include="ga\APNsgaIII.cpp" />
+    <ClCompile Include="ga\NsgaIII.cpp" />
     <ClCompile Include="GilbertCurve.cpp" />
     <ClCompile Include="MedianCut.cpp" />
     <ClCompile Include="NeuQuantizer.cpp" />
     <ClCompile Include="nQuantGpp.cpp" />
     <ClCompile Include="Otsu.cpp" />
+    <ClCompile Include="PnnLABGAQuantizer.cpp" />
     <ClCompile Include="PnnLABQuantizer.cpp" />
     <ClCompile Include="PnnQuantizer.cpp" />
     <ClCompile Include="SpatialQuantizer.cpp" />

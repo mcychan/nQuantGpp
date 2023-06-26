@@ -1,4 +1,5 @@
 #pragma once
+#include "CIELABConvertor.h"
 #include <memory>
 #include <vector>
 using namespace std;
@@ -23,8 +24,40 @@ namespace PnnLABQuant
 
 	class PnnLABQuantizer
 	{
+		private:
+			bool hasSemiTransparency = false;
+			int m_transparentPixelIndex = -1;
+			bool isGA = false;
+			double proportional = 1.0;
+			unordered_map<ARGB, CIELABConvertor::Lab> pixelMap;
+			unordered_map<ARGB, vector<ushort> > closestMap;
+			unordered_map<ARGB, ushort> nearestMap;
+			vector<float> saliencies;
+			Mat m_palette;
+
+			struct pnnbin {
+				float ac = 0, Lc = 0, Ac = 0, Bc = 0, err = 0;
+				float cnt = 0;
+				int nn = 0, fw = 0, bk = 0, tm = 0, mtm = 0;
+			};
+
+			void find_nn(pnnbin* bins, int idx, bool texicab);
+			ushort closestColorIndex(const Mat palette, const Vec4b& c, const uint pos);
+			bool quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const bool dither);
+			void clear();
+
 		public:
+			PnnLABQuantizer();
+			PnnLABQuantizer(const PnnLABQuantizer& quantizer);
 			void pnnquan(const Mat pixels, Mat palette, uint& nMaxColors);
+			bool IsGA() const;
+			void GetLab(const Vec4b& pixel, CIELABConvertor::Lab& lab1);
+			bool hasAlpha() const;
+			ushort nearestColorIndex(const Mat palette, const Vec4b& c0, const uint pos);
+			void setRatio(double ratio);
+			void setPalette(Mat palette);
+			void grabPixels(const Mat srcImg, Mat4b pixels, uint& nMaxColors, bool& hasSemiTransparency);
+			Mat QuantizeImage(const Mat4b pixels, Mat palette, vector<uchar>& bytes, uint& nMaxColors, bool dither = true);
 			Mat QuantizeImage(const Mat srcImg, vector<uchar>& bytes, uint& nMaxColors, bool dither = true);
 	};
 }

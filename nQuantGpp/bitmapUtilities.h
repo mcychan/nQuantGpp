@@ -5,9 +5,9 @@
 using namespace std;
 
 
-typedef ushort (*DitherFn)(const Mat, const Vec4b&, const uint);
+using DitherFn = function<ushort(const Mat, const Vec4b&, const uint)>;
 
-typedef int (*GetColorIndexFn)(const Vec4b&);
+using GetColorIndexFn = function<int(const Vec4b&)>;
 
 void CalcDitherPixel(int* pDitherPixel, const Vec4b& c, const uchar* clamp, const short* rowerr, int cursor, const bool noBias);
 

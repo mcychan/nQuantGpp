@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 
 namespace fs = std::filesystem;
 
@@ -15,7 +16,9 @@ namespace fs = std::filesystem;
 #include "PnnQuantizer.h"
 #include "NeuQuantizer.h"
 #include "WuQuantizer.h"
+#include "ga/APNsgaIII.h"
 #include "PnnLABQuantizer.h"
+#include "PnnLABGAQuantizer.h"
 #include "EdgeAwareSQuantizer.h"
 #include "SpatialQuantizer.h"
 #include "DivQuantizer.h"
@@ -29,7 +32,7 @@ namespace fs = std::filesystem;
 
 ostream& tcout = cout;
 
-string algs[] = { "PNN", "PNNLAB", "NEU", "WU", "EAS", "SPA", "DIV", "DL3", "MMC", "OTSU" };
+string algs[] = { "PNN", "PNNLAB", "PNNLAB+", "NEU", "WU", "EAS", "SPA", "DIV", "DL3", "MMC", "OTSU" };
 
 void PrintUsage()
 {
@@ -136,6 +139,15 @@ vector<uchar> QuantizeImage(const string& algorithm, const string& sourceFile, s
 	else if (algorithm == "PNNLAB") {
 		PnnLABQuant::PnnLABQuantizer pnnLABQuantizer;
 		dest = pnnLABQuantizer.QuantizeImage(source, bytes, nMaxColors, dither);
+	}
+	else if (algorithm == "PNNLAB+") {
+		PnnLABQuant::PnnLABQuantizer pnnLABQuantizer;
+		PnnLABQuant::PnnLABGAQuantizer pnnLABGAQuantizer(pnnLABQuantizer, source, nMaxColors);
+		nQuantGA::APNsgaIII<PnnLABQuant::PnnLABGAQuantizer> alg(pnnLABGAQuantizer);
+		alg.run(9999, -numeric_limits<double>::epsilon());
+		auto pGAq = alg.getResult();
+		cout << "\n" << pGAq->getRatio() << endl;
+		dest = pGAq->QuantizeImage(bytes, dither);
 	}
 	else if (algorithm == "NEU") {
 		NeuralNet::NeuQuantizer neuQuantizer;
