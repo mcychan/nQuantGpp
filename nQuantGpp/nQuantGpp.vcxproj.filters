@@ -60,6 +60,18 @@
     <ClInclude Include="SpatialQuantizer.h">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="PnnLABGAQuantizer.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="ga\APNsgaIII.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="ga\NsgaIII.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="ga\Chromosome.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="nQuantGpp.cpp">
@@ -105,6 +117,15 @@
       <Filter>來源檔案</Filter>
     </ClCompile>
     <ClCompile Include="PnnLABQuantizer.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="PnnLABGAQuantizer.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="ga\APNsgaIII.cpp">
+      <Filter>來源檔案</Filter>
+    </ClCompile>
+    <ClCompile Include="ga\NsgaIII.cpp">
       <Filter>來源檔案</Filter>
     </ClCompile>
   </ItemGroup>
