@@ -53,15 +53,15 @@ namespace PnnLABQuant
 
 	string PnnLABGAQuantizer::getRatioKey() const
 	{
-		auto ratioX = (short)(_ratioX * _dp);
-		auto ratioY = (short)(_ratioY * _dp);
+		auto ratioX = (int)(_ratioX * _dp);
+		auto ratioY = (int)(_ratioY * _dp);
 
 		ostringstream ss;
 		auto difference = abs(ratioX - ratioY);
 		if (difference <= 0.0000001)
 			ss << ratioX;
 		else
-			ss << ratioX << ", " << ratioY;
+			ss << ratioX << ";" << ratioY;
 		return ss.str();
 	}
 
@@ -116,10 +116,7 @@ namespace PnnLABQuant
 		}
 		
 		_fitness = -1.0f * (float) accumulate(_objectives.begin(), _objectives.end(), 0);
-		#pragma omp critical
-		{
 		_fitnessMap.insert({ ratioKey, _objectives });
-		}
 	}
 	
 	Mat PnnLABGAQuantizer::QuantizeImage(vector<uchar>& bytes, bool dither) {
@@ -209,7 +206,7 @@ namespace PnnLABQuant
 
 	shared_ptr<PnnLABGAQuantizer> PnnLABGAQuantizer::makeNewFromPrototype() {
 		auto child = make_shared<PnnLABGAQuantizer>(*m_pq, m_pixels, _bitmapWidth, _nMaxColors);
-		auto minRatio2 = 2 * minRatio;
+		auto minRatio2 = 1.5 * minRatio;
 		if(minRatio2 > 1)
 			minRatio2 = 0;
 		auto ratioX = randrange(minRatio, maxRatio);
