@@ -146,7 +146,7 @@ vector<uchar> QuantizeImage(const string& algorithm, const string& sourceFile, s
 		nQuantGA::APNsgaIII<PnnLABQuant::PnnLABGAQuantizer> alg(pnnLABGAQuantizer);
 		alg.run(9999, -numeric_limits<double>::epsilon());
 		auto pGAq = alg.getResult();
-		cout << "\n" << pGAq->getRatio() << endl;
+		cout << "\n" << pGAq->getResult() << endl;
 		dest = pGAq->QuantizeImage(bytes, dither);
 	}
 	else if (algorithm == "NEU") {
@@ -235,7 +235,7 @@ int main(int argc, char** argv)
 	string targetDir = "";
 #ifdef _DEBUG
 	algo = "PNN";
-	string sourceFile = szDir + "/../sailing_2020.jpg";	
+	string sourceFile = szDir + "/../g-fruit.jpg";	
 #else
 	if (!ProcessArgs(argc, algo, nMaxColors, dither, targetDir, argv))
 		return 0;

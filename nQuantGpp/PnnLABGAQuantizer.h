@@ -27,14 +27,14 @@ namespace PnnLABQuant
 			static_assert(std::numeric_limits<float>::is_iec559, "IEEE 754 required");
 
 			float _fitness = -numeric_limits<float>::infinity();
-			double _ratio = 0;
+			double _ratioX = 0, _ratioY = 0;
 			vector<double> _convertedObjectives;
 			vector<double> _objectives;
 			shared_ptr<Mat4b> m_pixels;
 			unique_ptr<PnnLABQuantizer> m_pq;
 
 			void calculateFitness();
-			short getRatioKey() const;
+			string getRatioKey() const;
 
 		public:
 			PnnLABGAQuantizer(PnnLABQuantizer& pq, Mat srcImg, uint nMaxColors);
@@ -50,8 +50,8 @@ namespace PnnLABQuant
 			shared_ptr<PnnLABGAQuantizer> makeNewFromPrototype() override;
 
 			uint getMaxColors() const;
-			double getRatio() const;
-			void setRatio(double value);
+			string getResult() const;
+			void setRatio(double ratioX, double ratioY);
 			Mat QuantizeImage(vector<uchar>& bytes, bool dither = true);
 			~PnnLABGAQuantizer();
 	};

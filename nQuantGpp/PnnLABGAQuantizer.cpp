@@ -9,6 +9,7 @@
 #include <numeric>
 #include <unordered_map>
 #include <random>
+#include <iomanip>
 
 namespace PnnLABQuant
 {	
@@ -16,7 +17,7 @@ namespace PnnLABQuant
 	uint _nMaxColors = 256;
 	double minRatio = 0, maxRatio = 1.0;
 
-	static unordered_map<short, vector<double> > fitnessMap;
+	static unordered_map<string, vector<double> > _fitnessMap;
 
 	PnnLABGAQuantizer::PnnLABGAQuantizer(PnnLABQuantizer& pq, Mat srcImg, uint nMaxColors) {
 		// increment value when criteria violation occurs
@@ -34,9 +35,9 @@ namespace PnnLABQuant
 		m_pixels = make_shared<Mat4b>(srcImg.rows, _bitmapWidth, Scalar(0, 0, 0, UCHAR_MAX)); 
 		m_pq->grabPixels(srcImg, *m_pixels, _nMaxColors, hasSemiTransparency);
 		_type = srcImg.type();
-		minRatio = (hasSemiTransparency || nMaxColors < 64) ? 0 : .85;
+		minRatio = (hasSemiTransparency || nMaxColors < 64) ? .01 : .85;
 		maxRatio = min(1.0, nMaxColors / ((nMaxColors < 64) ? 500.0 : 50.0));
-		_dp = maxRatio < .1 ? 1000 : 10;
+		_dp = maxRatio < .1 ? 1000 : 100;
 	}
 
 	PnnLABGAQuantizer::PnnLABGAQuantizer(PnnLABQuantizer& pq, const shared_ptr<Mat4b> pixels, int bitmapWidth, uint nMaxColors)
@@ -50,22 +51,31 @@ namespace PnnLABQuant
 		_nMaxColors = nMaxColors;
 	}
 
-	short PnnLABGAQuantizer::getRatioKey() const
+	string PnnLABGAQuantizer::getRatioKey() const
 	{
-		return (short)(_ratio * _dp);
+		auto ratioX = (short)(_ratioX * _dp);
+		auto ratioY = (short)(_ratioY * _dp);
+
+		ostringstream ss;
+		auto difference = abs(ratioX - ratioY);
+		if (difference <= 0.0000001)
+			ss << ratioX;
+		else
+			ss << ratioX << ", " << ratioY;
+		return ss.str();
 	}
 
 	void PnnLABGAQuantizer::calculateFitness() {
 		auto ratioKey = getRatioKey();
-		auto got = fitnessMap.find(ratioKey);
-		if (got != fitnessMap.end()) {
+		auto got = _fitnessMap.find(ratioKey);
+		if (got != _fitnessMap.end()) {
 			_objectives = got->second;
 			_fitness = -1.0f * (float) accumulate(_objectives.begin(), _objectives.end(), 0);
 			return;
 		}
 
 		_objectives.resize(4);
-		m_pq->setRatio(_ratio);
+		m_pq->setRatio(_ratioX, _ratioY);
 		
 		auto scalar = m_pq->hasAlpha() ? Scalar(0, 0, 0, UCHAR_MAX) : Scalar(0, 0, 0);
 		auto palette = make_shared<Mat>(_nMaxColors, 1, _type, scalar);
@@ -106,12 +116,14 @@ namespace PnnLABQuant
 		}
 		
 		_fitness = -1.0f * (float) accumulate(_objectives.begin(), _objectives.end(), 0);
-		fitnessMap.insert({ratioKey, _objectives});
+		#pragma omp critical
+		{
+		_fitnessMap.insert({ ratioKey, _objectives });
+		}
 	}
 	
 	Mat PnnLABGAQuantizer::QuantizeImage(vector<uchar>& bytes, bool dither) {
-		auto ratioKey = getRatioKey();
-		m_pq->setRatio(_ratio);
+		m_pq->setRatio(_ratioX, _ratioY);
 		auto scalar = m_pq->hasAlpha() ? Scalar(0, 0, 0, UCHAR_MAX) : Scalar(0, 0, 0);
 		auto palette = make_shared<Mat>(_nMaxColors, 1, _type, scalar);
 
@@ -121,7 +133,7 @@ namespace PnnLABQuant
 	}
 
 	PnnLABGAQuantizer::~PnnLABGAQuantizer() {
-		fitnessMap.clear();
+		_fitnessMap.clear();
 	}
 
 	double randrange(double min, double max)
@@ -130,9 +142,10 @@ namespace PnnLABQuant
 		return min + f * (max - min);
 	}
 	
-	void PnnLABGAQuantizer::setRatio(double value)
+	void PnnLABGAQuantizer::setRatio(double ratioX, double ratioY)
 	{
-		_ratio = min(max(value, minRatio), maxRatio);
+		_ratioX = min(max(ratioX, minRatio), maxRatio);
+		_ratioY = min(max(ratioY, minRatio), maxRatio);
 	}
 
 	float PnnLABGAQuantizer::getFitness() {
@@ -145,8 +158,9 @@ namespace PnnLABQuant
 		if ((rand() % 100) <= crossoverProbability)
 			return child;
 		
-		auto ratio = sqrt(getRatio() * mother.getRatio());
-		child->setRatio(ratio);
+		auto ratioX = sqrt(_ratioX * mother._ratioY);
+		auto ratioY = sqrt(_ratioY * mother._ratioX);
+		child->setRatio(ratioX, ratioY);
 		child->calculateFitness();
 		return child;
 	}
@@ -167,8 +181,15 @@ namespace PnnLABQuant
 		// check probability of mutation operation
 		if ((rand() % 100) > mutationProbability)
 			return;
-		
-		_ratio = .5 * (getRatio() + randrange(minRatio, maxRatio));
+
+		auto ratioX = _ratioX;
+		auto ratioY = _ratioY;
+		if(randrange(.0, 1.0) > .5)
+			ratioX = .5 * (ratioX + randrange(minRatio, maxRatio));
+		else
+			ratioY = .5 * (ratioY + randrange(minRatio, maxRatio));
+
+		setRatio(ratioX, ratioY);
 		calculateFitness();
 	}
 
@@ -188,7 +209,12 @@ namespace PnnLABQuant
 
 	shared_ptr<PnnLABGAQuantizer> PnnLABGAQuantizer::makeNewFromPrototype() {
 		auto child = make_shared<PnnLABGAQuantizer>(*m_pq, m_pixels, _bitmapWidth, _nMaxColors);
-		child->setRatio(randrange(minRatio, maxRatio));
+		auto minRatio2 = 2 * minRatio;
+		if(minRatio2 > 1)
+			minRatio2 = 0;
+		auto ratioX = randrange(minRatio, maxRatio);
+		auto ratioY = ratioX < minRatio2 ? randrange(minRatio, maxRatio) : ratioX;
+		child->setRatio(ratioX, ratioY);
 		child->calculateFitness();
 		return child;
 	}
@@ -197,9 +223,16 @@ namespace PnnLABQuant
 		return _nMaxColors;
 	}
 
-	double PnnLABGAQuantizer::getRatio() const
+	
+	string PnnLABGAQuantizer::getResult() const
 	{
-		return _ratio;
+		ostringstream ss;
+		auto difference = abs(_ratioX - _ratioY);
+		if (difference <= 0.0000001)
+			ss << std::setprecision(6) << _ratioX;
+		else
+			ss << std::setprecision(6) << _ratioX << ", " << _ratioY;
+		return ss.str();
 	}
 
 }

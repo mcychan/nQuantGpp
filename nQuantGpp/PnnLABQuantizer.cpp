@@ -15,7 +15,7 @@ namespace PnnLABQuant
 {
 	double PR = 0.299, PG = 0.587, PB = 0.114, PA = .3333;
 	uchar alphaThreshold = 0xF;	
-	double ratio = 1.0, weight = 1.0;
+	double weight = 1.0;
 	
 	Vec4b m_transparentColor(UCHAR_MAX, UCHAR_MAX, UCHAR_MAX, 0);
 
@@ -137,7 +137,7 @@ namespace PnnLABQuant
 		return[](const float& cnt) { return cnt; };
 	}
 
-	void PnnLABQuantizer::pnnquan(const Mat pixels, Mat palette, uint& nMaxColors)
+	void PnnLABQuantizer::pnnquan(const Mat4b pixels, Mat palette, uint& nMaxColors)
 	{
 		short quan_rt = 1;
 		vector<pnnbin> bins(USHRT_MAX + 1);
@@ -150,8 +150,7 @@ namespace PnnLABQuant
 		{
 			for (int x = 0; x < pixels.cols; ++x)
 			{
-				Vec4b c;
-				GrabPixel(c, pixels, y, x);
+				auto c = pixels(y, x);
 				if (c[3] <= alphaThreshold)
 					c = m_transparentColor;
 
@@ -238,30 +237,32 @@ namespace PnnLABQuant
 		bins[j].cnt = quanFn(bins[j].cnt);
 
 		const bool texicab = proportional > .025;
-		
-		if (hasSemiTransparency)
-			ratio = .5;
-		else if (quan_rt != 0 && nMaxColors < 64) {
-			if (proportional > .018 && proportional < .022)
-				ratio = min(1.0, proportional + weight * exp(3.622));
-			else if (proportional > .1)
-				ratio = min(1.0, 1.0 - weight);
-			else if (proportional > .04)
-				ratio = min(1.0, weight * exp(2.44));
-			else if (proportional > .028)
-				ratio = min(1.0, weight * exp(3.225));
-			else {
-				auto beta = (maxbins % 2 == 0) ? 2 : 1;
-				ratio = min(1.0, proportional + beta * weight * exp(1.947));
-			}
-		}
-		else if (nMaxColors > 256)
-			ratio = min(1.0, 1 - 1.0 / proportional);
-		else
-			ratio = min(1.0, max(.98, 1 - weight * .7));
 
-		if (!hasSemiTransparency && quan_rt < 0)
-			ratio = min(1.0, weight * exp(1.947));
+		if(!isGA) {
+			if (hasSemiTransparency)
+				ratio = .5;
+			else if (quan_rt != 0 && nMaxColors < 64) {
+				if (proportional > .018 && proportional < .022)
+					ratio = min(1.0, proportional + weight * exp(3.622));
+				else if (proportional > .1)
+					ratio = min(1.0, 1.0 - weight);
+				else if (proportional > .04)
+					ratio = min(1.0, weight * exp(2.44));
+				else if (proportional > .028)
+					ratio = min(1.0, weight * exp(3.225));
+				else {
+					auto beta = (maxbins % 2 == 0) ? 2 : 1;
+					ratio = min(1.0, proportional + beta * weight * exp(1.947));
+				}
+			}
+			else if (nMaxColors > 256)
+				ratio = min(1.0, 1 - 1.0 / proportional);
+			else
+				ratio = min(1.0, max(.98, 1 - weight * .7));
+
+			if (!hasSemiTransparency && quan_rt < 0)
+				ratio = min(1.0, weight * exp(1.947));
+		}
 
 		int h, l, l2;
 		/* Initialize nearest neighbors and build heap of them */
@@ -279,8 +280,10 @@ namespace PnnLABQuant
 			heap[l] = i;
 		}
 
-		if (quan_rt > 0 && nMaxColors < 64 && (proportional < .023 || proportional > .05) && proportional < .1)
+		if (!isGA && quan_rt > 0 && nMaxColors < 64 && (proportional < .023 || proportional > .05) && proportional < .1)
 			ratio = min(1.0, proportional - weight * exp(2.107));
+		else
+			ratio = ratioY;
 
 		/* Merge bins which increase error the least */
 		int extbins = maxbins - nMaxColors;
@@ -523,7 +526,7 @@ namespace PnnLABQuant
 		if (closest[2] == 0 || (rand() % (int)ceil(closest[3] + closest[2])) <= closest[3])
 			idx = 0;
 
-		if (closest[idx + 2] >= MAX_ERR || (hasAlpha() && closest[idx] == 0))
+		if (closest[idx + 2] >= MAX_ERR || (hasAlpha() && closest[idx + 2] == 0))
 			return nearestColorIndex(palette, c, pos);
 		return closest[idx];
 	}
@@ -534,7 +537,7 @@ namespace PnnLABQuant
 		auto height = pixels.rows;
 
 		auto NearestColorIndex = [this, nMaxColors](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
-			if (m_transparentPixelIndex >= 0 || nMaxColors < 64)
+			if (hasAlpha() || nMaxColors < 64)
 				return nearestColorIndex(palette, c, pos);
 			return closestColorIndex(palette, c, pos);
 		};
@@ -565,8 +568,9 @@ namespace PnnLABQuant
 		return m_transparentPixelIndex >= 0;
 	}
 	
-	void PnnLABQuantizer::setRatio(double value) {
-		ratio = min(1.0, value);
+	void PnnLABQuantizer::setRatio(double ratioX, double ratioY) {
+		ratio = min(1.0, ratioX);
+		this->ratioY = min(1.0, ratioY);
 		clear();
 	}
 	

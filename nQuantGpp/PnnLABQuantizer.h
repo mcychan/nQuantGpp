@@ -28,7 +28,7 @@ namespace PnnLABQuant
 			bool hasSemiTransparency = false;
 			int m_transparentPixelIndex = -1;
 			bool isGA = false;
-			double proportional = 1.0;
+			double proportional = 1.0, ratio = .5, ratioY = .5;
 			unordered_map<ARGB, CIELABConvertor::Lab> pixelMap;
 			unordered_map<ARGB, vector<ushort> > closestMap;
 			unordered_map<ARGB, ushort> nearestMap;
@@ -49,12 +49,12 @@ namespace PnnLABQuant
 		public:
 			PnnLABQuantizer();
 			PnnLABQuantizer(const PnnLABQuantizer& quantizer);
-			void pnnquan(const Mat pixels, Mat palette, uint& nMaxColors);
+			void pnnquan(const Mat4b pixels, Mat palette, uint& nMaxColors);
 			bool IsGA() const;
 			void GetLab(const Vec4b& pixel, CIELABConvertor::Lab& lab1);
 			bool hasAlpha() const;
 			ushort nearestColorIndex(const Mat palette, const Vec4b& c0, const uint pos);
-			void setRatio(double ratio);
+			void setRatio(double ratioX, double ratioY);
 			void setPalette(Mat palette);
 			void grabPixels(const Mat srcImg, Mat4b pixels, uint& nMaxColors, bool& hasSemiTransparency);
 			Mat QuantizeImage(const Mat4b pixels, Mat palette, vector<uchar>& bytes, uint& nMaxColors, bool dither = true);
