@@ -53,7 +53,7 @@ namespace PnnLABQuant
 		_nMaxColors = nMaxColors;
 	}
 
-	auto PnnLABGAQuantizer::findByRatioKey() const
+	unordered_map<string, vector<double> >::const_iterator PnnLABGAQuantizer::findByRatioKey() const
 	{
 		auto ratioX = (int)(_ratioX * _dp);
 		auto ratioY = (int)(_ratioY * _dp);
