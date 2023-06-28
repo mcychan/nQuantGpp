@@ -31,6 +31,7 @@ namespace PnnLABQuant
 		if(pq.IsGA())
 			return;
 
+		clear();
 		_nMaxColors = nMaxColors;	
 
 		bool hasSemiTransparency = false;
@@ -138,7 +139,7 @@ namespace PnnLABQuant
 		return m_pq->QuantizeImage(*m_pixels, *palette, bytes, _nMaxColors, dither);
 	}
 
-	PnnLABGAQuantizer::~PnnLABGAQuantizer() {
+	void PnnLABGAQuantizer::clear() {
 		unique_lock<shared_mutex> lock(_mutex);
 		_fitnessMap.clear();
 	}
