@@ -36,6 +36,7 @@ namespace PnnLABQuant
 			void calculateFitness();
 			string getRatioKey() const;
 			auto findByRatioKey(const string& ratioKey) const;
+			void clear();
 
 		public:
 			PnnLABGAQuantizer(PnnLABQuantizer& pq, Mat srcImg, uint nMaxColors);
@@ -54,6 +55,5 @@ namespace PnnLABQuant
 			string getResult() const;
 			void setRatio(double ratioX, double ratioY);
 			Mat QuantizeImage(vector<uchar>& bytes, bool dither = true);
-			~PnnLABGAQuantizer();
 	};
 }
