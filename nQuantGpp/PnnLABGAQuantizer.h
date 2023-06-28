@@ -35,7 +35,7 @@ namespace PnnLABQuant
 
 			void calculateFitness();
 			string getRatioKey() const;
-			auto findByRatioKey((const string& ratioKey)) const;
+			auto findByRatioKey(const string& ratioKey) const;
 
 		public:
 			PnnLABGAQuantizer(PnnLABQuantizer& pq, Mat srcImg, uint nMaxColors);
