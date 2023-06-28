@@ -7,7 +7,7 @@
 #include "BlueNoise.h"
 
 #include <numeric>
-#include <omp.h>
+#include <shared_mutex>
 #include <unordered_map>
 #include <random>
 #include <iomanip>
@@ -19,6 +19,7 @@ namespace PnnLABQuant
 	double minRatio = 0, maxRatio = 1.0;
 
 	static unordered_map<string, vector<double> > _fitnessMap;
+	static shared_mutex _mutex;
 
 	PnnLABGAQuantizer::PnnLABGAQuantizer(PnnLABQuantizer& pq, Mat srcImg, uint nMaxColors) {
 		// increment value when criteria violation occurs
@@ -52,7 +53,7 @@ namespace PnnLABQuant
 		_nMaxColors = nMaxColors;
 	}
 
-	string PnnLABGAQuantizer::getRatioKey() const
+	const_iterator PnnLABGAQuantizer::findByRatioKey() const
 	{
 		auto ratioX = (int)(_ratioX * _dp);
 		auto ratioY = (int)(_ratioY * _dp);
@@ -63,12 +64,14 @@ namespace PnnLABQuant
 			ss << ratioX;
 		else
 			ss << ratioX << ";" << ratioY;
-		return ss.str();
+
+		auto ratioKey = ss.str();
+		shared_lock<shared_mutex> lock(_mutex);
+		return _fitnessMap.find(ratioKey);
 	}
 
 	void PnnLABGAQuantizer::calculateFitness() {
-		auto ratioKey = getRatioKey();
-		auto got = _fitnessMap.find(ratioKey);
+		auto got = findByRatioKey();
 		if (got != _fitnessMap.end()) {
 			_objectives = got->second;
 			_fitness = -1.0f * (float) accumulate(_objectives.begin(), _objectives.end(), 0);
@@ -117,7 +120,7 @@ namespace PnnLABQuant
 		}
 		
 		_fitness = -1.0f * (float) accumulate(_objectives.begin(), _objectives.end(), 0);
-	#pragma omp critical
+		unique_lock<shared_mutex> lock(_mutex);
 		_fitnessMap.insert({ ratioKey, _objectives });
 	}
 	
@@ -132,7 +135,7 @@ namespace PnnLABQuant
 	}
 
 	PnnLABGAQuantizer::~PnnLABGAQuantizer() {
-	#pragma omp critical
+		unique_lock<shared_mutex> lock(_mutex);
 		_fitnessMap.clear();
 	}
 
