@@ -7,6 +7,7 @@
 #include "BlueNoise.h"
 
 #include <numeric>
+#include <omp.h>
 #include <unordered_map>
 #include <random>
 #include <iomanip>
@@ -116,6 +117,7 @@ namespace PnnLABQuant
 		}
 		
 		_fitness = -1.0f * (float) accumulate(_objectives.begin(), _objectives.end(), 0);
+	#pragma omp critical
 		_fitnessMap.insert({ ratioKey, _objectives });
 	}
 	
@@ -130,6 +132,7 @@ namespace PnnLABQuant
 	}
 
 	PnnLABGAQuantizer::~PnnLABGAQuantizer() {
+	#pragma omp critical
 		_fitnessMap.clear();
 	}
 
