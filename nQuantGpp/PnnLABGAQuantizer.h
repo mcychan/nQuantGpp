@@ -36,7 +36,7 @@ namespace PnnLABQuant
 			unique_ptr<PnnLABQuantizer> m_pq;
 
 			void calculateFitness();
-			const_iterator findByRatioKey() const;
+			iterator findByRatioKey() const;
 
 		public:
 			PnnLABGAQuantizer(PnnLABQuantizer& pq, Mat srcImg, uint nMaxColors);
