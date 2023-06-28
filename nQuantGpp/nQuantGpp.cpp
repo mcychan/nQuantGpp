@@ -235,7 +235,7 @@ int main(int argc, char** argv)
 	string targetDir = "";
 #ifdef _DEBUG
 	algo = "PNN";
-	string sourceFile = szDir + "/../g-fruit.jpg";	
+	string sourceFile = szDir + "/../sailing_2020.jpg";	
 #else
 	if (!ProcessArgs(argc, algo, nMaxColors, dither, targetDir, argv))
 		return 0;

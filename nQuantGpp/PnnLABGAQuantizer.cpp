@@ -71,14 +71,17 @@ namespace PnnLABQuant
 	auto PnnLABGAQuantizer::findByRatioKey(const string& ratioKey) const
 	{
 		shared_lock<shared_mutex> lock(_mutex);
-		return _fitnessMap.find(ratioKey);
+		auto got = _fitnessMap.find(ratioKey);
+		if (got != _fitnessMap.end())
+			return got->second;
+		return vector<double>();
 	}
 
 	void PnnLABGAQuantizer::calculateFitness() {
 		auto ratioKey = getRatioKey();
-		auto got = findByRatioKey(ratioKey);
-		if (got != _fitnessMap.end()) {
-			_objectives = got->second;
+		auto objectives = findByRatioKey(ratioKey);
+		if (!objectives.empty()) {
+			_objectives = objectives;
 			_fitness = -1.0f * (float) accumulate(_objectives.begin(), _objectives.end(), 0);
 			return;
 		}

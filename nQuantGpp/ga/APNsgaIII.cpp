@@ -148,7 +148,6 @@ namespace nQuantGA
 			auto offspring = this->crossing(pop[cur]);
 				
 			/******************* mutation *****************/
-			#pragma omp parallel for
 			for (int i = 0; i < offspring.size(); ++i) {
 				offspring[i]->mutation(this->_mutationSize, this->_mutationProbability);
 			}

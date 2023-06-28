@@ -483,7 +483,7 @@ namespace nQuantGA
 	{
 		vector<shared_ptr<T> > offspring;
 		offspring.reserve(_populationSize);
-		#pragma omp parallel for
+
 		for (int i = 0; i < _populationSize; i += 2) {
 			int father = rand() % _populationSize, mother = rand() % _populationSize;
 			auto child0 = population[father]->crossover(*(population[mother]), _numberOfCrossoverPoints, _crossoverProbability);
@@ -569,7 +569,6 @@ namespace nQuantGA
 			auto offspring = crossing(pop[cur]);
 				
 			/******************* mutation *****************/
-			#pragma omp parallel for
 			for (int i = 0; i < offspring.size(); ++i) {
 				offspring[i]->mutation(_mutationSize, _mutationProbability);
 			}
