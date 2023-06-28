@@ -34,7 +34,7 @@ namespace PnnLABQuant
 			unique_ptr<PnnLABQuantizer> m_pq;
 
 			void calculateFitness();
-			auto findByRatioKey() const;
+			unordered_map<string, vector<double> >::const_iterator findByRatioKey() const;
 
 		public:
 			PnnLABGAQuantizer(PnnLABQuantizer& pq, Mat srcImg, uint nMaxColors);
