@@ -53,7 +53,7 @@ namespace PnnLABQuant
 		_nMaxColors = nMaxColors;
 	}
 
-	iterator PnnLABGAQuantizer::findByRatioKey() const
+	auto PnnLABGAQuantizer::findByRatioKey() const
 	{
 		auto ratioX = (int)(_ratioX * _dp);
 		auto ratioY = (int)(_ratioY * _dp);
