@@ -53,7 +53,7 @@ namespace PnnLABQuant
 		_nMaxColors = nMaxColors;
 	}
 
-	unordered_map<string, vector<double> >::const_iterator PnnLABGAQuantizer::findByRatioKey() const
+	string PnnLABGAQuantizer::getRatioKey() const
 	{
 		auto ratioX = (int)(_ratioX * _dp);
 		auto ratioY = (int)(_ratioY * _dp);
@@ -64,14 +64,18 @@ namespace PnnLABQuant
 			ss << ratioX;
 		else
 			ss << ratioX << ";" << ratioY;
+		return ss.str();
+	}
 
-		auto ratioKey = ss.str();
+	auto PnnLABGAQuantizer::findByRatioKey(const string& ratioKey) const
+	{
 		shared_lock<shared_mutex> lock(_mutex);
 		return _fitnessMap.find(ratioKey);
 	}
 
 	void PnnLABGAQuantizer::calculateFitness() {
-		auto got = findByRatioKey();
+		auto ratioKey = getRatioKey();
+		auto got = findByRatioKey(ratioKey);
 		if (got != _fitnessMap.end()) {
 			_objectives = got->second;
 			_fitness = -1.0f * (float) accumulate(_objectives.begin(), _objectives.end(), 0);
