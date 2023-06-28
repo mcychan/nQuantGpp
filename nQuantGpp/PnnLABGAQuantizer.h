@@ -2,8 +2,6 @@
 #include "PnnLABQuantizer.h"
 #include "ga/Chromosome.h"
 
-#include <iterator>
-
 namespace PnnLABQuant
 {
 	// =============================================================
@@ -36,7 +34,7 @@ namespace PnnLABQuant
 			unique_ptr<PnnLABQuantizer> m_pq;
 
 			void calculateFitness();
-			iterator findByRatioKey() const;
+			auto findByRatioKey() const;
 
 		public:
 			PnnLABGAQuantizer(PnnLABQuantizer& pq, Mat srcImg, uint nMaxColors);
