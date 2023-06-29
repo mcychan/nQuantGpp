@@ -484,11 +484,14 @@ namespace nQuantGA
 		vector<shared_ptr<T> > offspring;
 		offspring.reserve(_populationSize);
 		#pragma omp parallel for
-		for (int i = 0; i < _populationSize; i += 2) {
-			int father = rand() % _populationSize, mother = rand() % _populationSize;
-			offspring.emplace_back(population[father]->crossover(*(population[mother]), _numberOfCrossoverPoints, _crossoverProbability));
-			if((i + 1) < _populationSize)
-				offspring.emplace_back(population[mother]->crossover(*(population[father]), _numberOfCrossoverPoints, _crossoverProbability));
+		for (int i = 0; i < _populationSize; ++i) {
+			if (i % 2 == 0) {
+				int father = rand() % _populationSize, mother = rand() % _populationSize;
+				auto child0 = population[father]->crossover(*(population[mother]), _numberOfCrossoverPoints, _crossoverProbability);
+				auto child1 = population[mother]->crossover(*(population[father]), _numberOfCrossoverPoints, _crossoverProbability);
+				offspring.emplace_back(child0);
+				offspring.emplace_back(child1);
+			}
 		}
 		return offspring;
 	}

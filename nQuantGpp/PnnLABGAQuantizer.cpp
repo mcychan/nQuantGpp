@@ -40,7 +40,7 @@ namespace PnnLABQuant
 		_type = srcImg.type();
 		minRatio = (hasSemiTransparency || nMaxColors < 64) ? .01 : .85;
 		maxRatio = min(1.0, nMaxColors / ((nMaxColors < 64) ? 500.0 : 50.0));
-		_dp = maxRatio < .1 ? 1000 : 100;
+		_dp = maxRatio < .1 ? 10000 : 100;
 	}
 
 	PnnLABGAQuantizer::PnnLABGAQuantizer(PnnLABQuantizer& pq, const shared_ptr<Mat4b> pixels, int bitmapWidth, uint nMaxColors)
