@@ -418,11 +418,10 @@ namespace nQuant
 		auto bottomBlue = Bottom(cube, direction, data.momentsBlue.get());
 		auto bottomWeight = Bottom(cube, direction, data.weights.get());
 
-		volatile bool valid = false;
-		volatile auto result = 0.0f;
-		volatile uchar cutPoint = 0;
+		bool valid = false;
+		auto result = 0.0f;
+		uchar cutPoint = 0;
 
-#pragma omp parallel for
 		for (int position = first; position < last; ++position)
 		{
 			auto halfAlpha = bottomAlpha + Top(cube, direction, position, data.momentsAlpha.get());
