@@ -56,15 +56,13 @@ namespace PnnLABQuant
 
 	string PnnLABGAQuantizer::getRatioKey() const
 	{
-		auto ratioX = (int)(_ratioX * _dp);
-		auto ratioY = (int)(_ratioY * _dp);
-
 		ostringstream ss;
-		auto difference = abs(ratioX - ratioY);
+		ss << (int)(_ratioX * _dp);
+		auto difference = abs(_ratioX - _ratioY);
 		if (difference <= 0.0000001)
-			ss << ratioX;
-		else
-			ss << ratioX << ";" << ratioY;
+			return ss.str();
+
+		ss << ";" << std::setprecision(10) << (_ratioY * _dp);
 		return ss.str();
 	}
 
