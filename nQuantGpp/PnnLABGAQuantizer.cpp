@@ -7,7 +7,7 @@
 #include "BlueNoise.h"
 
 #include <numeric>
-#include <mutex>
+#include <shared_mutex>
 #include <unordered_map>
 #include <random>
 #include <iomanip>
@@ -19,7 +19,7 @@ namespace PnnLABQuant
 	double minRatio = 0, maxRatio = 1.0;
 
 	static unordered_map<string, vector<double> > _fitnessMap;
-	static mutex _mutex;
+	static shared_mutex _mutex;
 
 	PnnLABGAQuantizer::PnnLABGAQuantizer(PnnLABQuantizer& pq, Mat srcImg, uint nMaxColors) {
 		// increment value when criteria violation occurs
@@ -62,13 +62,13 @@ namespace PnnLABQuant
 		if (difference <= 0.0000001)
 			return ss.str();
 
-		ss << ";" << std::setprecision(10) << (_ratioY * _dp);
+		ss << ";" << std::setprecision(6) << (_ratioY * _dp);
 		return ss.str();
 	}
 
 	auto PnnLABGAQuantizer::findByRatioKey(const string& ratioKey) const
 	{
-		lock_guard<mutex> lock(_mutex);
+		unique_lock<shared_mutex> lock(_mutex);
 		auto got = _fitnessMap.find(ratioKey);
 		if (got != _fitnessMap.end())
 			return got->second;
@@ -126,7 +126,7 @@ namespace PnnLABQuant
 		}
 		
 		_fitness = -1.0f * (float) accumulate(_objectives.begin(), _objectives.end(), 0);
-		lock_guard<mutex> lock(_mutex);
+		unique_lock<shared_mutex> lock(_mutex);
 		_fitnessMap.insert({ ratioKey, _objectives });
 	}
 	
@@ -141,7 +141,7 @@ namespace PnnLABQuant
 	}
 
 	void PnnLABGAQuantizer::clear() {
-		lock_guard<mutex> lock(_mutex);
+		unique_lock<shared_mutex> lock(_mutex);
 		_fitnessMap.clear();
 	}
 
