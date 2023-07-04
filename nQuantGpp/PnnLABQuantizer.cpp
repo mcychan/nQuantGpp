@@ -282,7 +282,7 @@ namespace PnnLABQuant
 
 		if (!isGA && quan_rt > 0 && nMaxColors < 64 && (proportional < .023 || proportional > .05) && proportional < .1)
 			ratio = min(1.0, proportional - weight * exp(2.107));
-		else
+		else if (isGA)
 			ratio = ratioY;
 
 		/* Merge bins which increase error the least */
@@ -573,10 +573,6 @@ namespace PnnLABQuant
 		this->ratioY = min(1.0, ratioY);
 		clear();
 	}
-	
-	void PnnLABQuantizer::setPalette(Mat palette) {
-		m_palette = palette;
-	}
 
 	void PnnLABQuantizer::grabPixels(const Mat srcImg, Mat4b pixels, uint& nMaxColors, bool& hasSemiTransparency)
 	{
@@ -612,17 +608,17 @@ namespace PnnLABQuant
 		if (hasSemiTransparency)
 			weight *= -1;
 
-		auto GetColorIndex = [this](const Vec4b& c) -> int {
+		auto GetColorIndex = [&](const Vec4b& c) -> int {
 			return GetArgbIndex(c, hasSemiTransparency, hasAlpha());
 		};
-		auto ClosestColorIndex = [this](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
+		auto ClosestColorIndex = [&](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
 			return closestColorIndex(palette, c, pos);
 		};
 
 		Peano::GilbertCurve::dither(pixels4b, palette, ClosestColorIndex, GetColorIndex, qPixels, saliencies.data(), weight);
 
 		if (nMaxColors > 256) {
-			auto NearestColorIndex = [this](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
+			auto NearestColorIndex = [&](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
 				return nearestColorIndex(palette, c, pos);
 			};
 

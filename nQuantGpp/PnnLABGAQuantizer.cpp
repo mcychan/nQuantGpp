@@ -90,7 +90,6 @@ namespace PnnLABQuant
 		auto scalar = m_pq->hasAlpha() ? Scalar(0, 0, 0, UCHAR_MAX) : Scalar(0, 0, 0);
 		auto palette = make_shared<Mat>(_nMaxColors, 1, _type, scalar);
 		m_pq->pnnquan(*m_pixels, *palette, _nMaxColors);
-		m_pq->setPalette(*palette);
 
 		auto& errors = _objectives;
 		fill(errors.begin(), errors.end(), 0);
@@ -136,7 +135,6 @@ namespace PnnLABQuant
 		auto palette = make_shared<Mat>(_nMaxColors, 1, _type, scalar);
 
 		m_pq->pnnquan(*m_pixels, *palette, _nMaxColors);
-		m_pq->setPalette(*palette);
 		return m_pq->QuantizeImage(*m_pixels, *palette, bytes, _nMaxColors, dither);
 	}
 
