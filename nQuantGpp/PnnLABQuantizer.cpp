@@ -611,11 +611,17 @@ namespace PnnLABQuant
 		auto GetColorIndex = [&](const Vec4b& c) -> int {
 			return GetArgbIndex(c, hasSemiTransparency, hasAlpha());
 		};
-		auto ClosestColorIndex = [&](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
+		DitherFn ditherFn;
+		if (hasAlpha() || nMaxColors < 64)
+			ditherFn = [&](const Mat palette, const Vec4b& c, const uint pos) -> unsigned short {
+			return nearestColorIndex(palette, c, pos);
+		};
+		else
+			ditherFn = [&](const Mat palette, const Vec4b& c, const uint pos) -> unsigned short {
 			return closestColorIndex(palette, c, pos);
 		};
 
-		Peano::GilbertCurve::dither(pixels4b, palette, ClosestColorIndex, GetColorIndex, qPixels, saliencies.data(), weight);
+		Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight);
 
 		if (nMaxColors > 256) {
 			auto NearestColorIndex = [&](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
@@ -633,7 +639,7 @@ namespace PnnLABQuant
 		if (!dither) {
 			const auto delta = sqr(nMaxColors) / pixelMap.size();
 			auto weight = delta > 0.023 ? 1.0f : (float)(36.921 * delta + 0.906);
-			BlueNoise::dither(pixels4b, palette, ClosestColorIndex, GetColorIndex, qPixels, weight);
+			BlueNoise::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, weight);
 		}
 
 		if (m_transparentPixelIndex >= 0) {
