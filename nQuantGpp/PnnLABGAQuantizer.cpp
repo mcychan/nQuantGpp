@@ -245,7 +245,7 @@ namespace PnnLABQuant
 
 	shared_ptr<PnnLABGAQuantizer> PnnLABGAQuantizer::makeNewFromPrototype() {
 		auto child = make_shared<PnnLABGAQuantizer>(*m_pq, m_pixels, _bitmapWidth, _nMaxColors);
-		auto minRatio2 = 1.5 * minRatio;
+		auto minRatio2 = 2.0 * minRatio;
 		if(minRatio2 > 1)
 			minRatio2 = 0;
 		auto ratioX = randrange(minRatio, maxRatio);
