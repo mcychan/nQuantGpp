@@ -171,7 +171,7 @@ namespace PnnLABQuant
 		auto theta = M_PI * randrange(minRatio, maxRatio) / exp(delta);
 		auto result = u * sin(theta) + v * cos(theta);
 		if (result <= minRatio || result >= maxRatio)
-			result = rotateRight(u, v, delta);
+			result = rotateRight(u, v, delta + .5);
 		return result;
 	}
 
@@ -179,7 +179,7 @@ namespace PnnLABQuant
 		auto theta = M_PI * randrange(minRatio, maxRatio) / exp(delta);
 		auto result = u * cos(theta) - v * sin(theta);
 		if (result <= minRatio || result >= maxRatio)
-			result = rotateLeft(u, v, delta);
+			result = rotateLeft(u, v, delta + .5);
 		return result;
 	}
 
