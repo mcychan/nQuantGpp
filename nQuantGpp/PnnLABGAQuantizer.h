@@ -33,6 +33,7 @@ namespace PnnLABQuant
 			shared_ptr<Mat4b> m_pixels;
 			unique_ptr<PnnLABQuantizer> m_pq;
 
+			void calculateError(vector<double>& errors);
 			void calculateFitness();
 			string getRatioKey() const;
 			auto findByRatioKey(const string& ratioKey) const;
