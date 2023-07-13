@@ -98,10 +98,8 @@ namespace PnnLABQuant
 		auto ratioKey = getRatioKey();
 		auto objectives = findByRatioKey(ratioKey);
 		if (!objectives.empty()) {
-			_objectives = objectives;
 			_fitness = -1.0 * accumulate(_objectives.begin(), _objectives.end(), 0);
-			if(_fitness < -1)
-				return;
+			return;
 		}
 
 		_objectives.resize(4);
