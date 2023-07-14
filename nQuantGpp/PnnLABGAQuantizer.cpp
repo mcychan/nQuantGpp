@@ -79,7 +79,7 @@ namespace PnnLABQuant
 	}
 
 	void PnnLABGAQuantizer::calculateError(vector<double>& errors) {
-		auto maxError = maxRatio < .1 ? .5 : .0625;
+		auto maxError = maxRatio < .1 ? 1.0 : .125;
 		auto fitness = 0.0;
 		for (int i = 0; i < errors.size(); ++i) {
 			errors[i] /= maxError * m_pixels->rows * m_pixels->cols;
@@ -98,7 +98,7 @@ namespace PnnLABQuant
 		auto ratioKey = getRatioKey();
 		auto objectives = findByRatioKey(ratioKey);
 		if (!objectives.empty()) {
-			_fitness = -1.0 * accumulate(_objectives.begin(), _objectives.end(), 0);
+			_fitness = -1.0 * accumulate(objectives.begin(), objectives.end(), 0);
 			_objectives = objectives;
 			return;
 		}
