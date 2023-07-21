@@ -41,7 +41,7 @@ namespace PnnLABQuant
 		m_pixels = make_shared<Mat4b>(srcImg.rows, _bitmapWidth, Scalar(0, 0, 0, UCHAR_MAX)); 
 		m_pq->grabPixels(srcImg, *m_pixels, _nMaxColors, hasSemiTransparency);
 		_type = srcImg.type();
-		minRatio = (hasSemiTransparency || nMaxColors < 64) ? .01 : .85;
+		minRatio = (hasSemiTransparency || nMaxColors < 64) ? .0111 : .85;
 		maxRatio = min(1.0, nMaxColors / ((nMaxColors < 64) ? 500.0 : 50.0));
 		_dp = maxRatio < .1 ? 10000 : 100;
 	}
@@ -78,17 +78,34 @@ namespace PnnLABQuant
 		return vector<double>();
 	}
 
+	using AmplifyFn = function<double(const bool)>;
+
 	void PnnLABGAQuantizer::calculateError(vector<double>& errors) {
-		auto maxError = maxRatio < .1 ? 1.0 : .125;
+		auto maxError = maxRatio < .1 ? .5 : .0625;
+		if (m_pq->hasAlpha())
+			maxError = 1;
+
 		auto fitness = 0.0;
+		bool tooSmall = false; // any error < exp(1.0) concluded as too small
 		for (int i = 0; i < errors.size(); ++i) {
 			errors[i] /= maxError * m_pixels->rows * m_pixels->cols;
-			if (i == 0 && errors[i] > maxError)
-				errors[i] *= errors[i];
-			else if (errors[i] > (2 * maxError))
-				errors[i] *= errors[i];
-			fitness -= errors[i];
+			if (errors[i] < 3)
+				tooSmall = true;
 		}
+
+		AmplifyFn amplifyFn = [tooSmall](const double val) -> double {
+			if (tooSmall)
+				return exp(val);
+			return log(val);
+		};
+
+		for (int i = 0; i < errors.size(); ++i) {
+			if (i == 0 && errors[i] > maxError)
+				errors[i] *= amplifyFn(errors[i]);
+			else if (errors[i] > (2 * maxError))
+				errors[i] *= amplifyFn(errors[i]);
+			fitness -= errors[i];
+		}		
 
 		_objectives = errors;
 		_fitness = fitness;
@@ -279,9 +296,9 @@ namespace PnnLABQuant
 		ostringstream ss;
 		auto difference = abs(_ratioX - _ratioY);
 		if (difference <= 0.0000001)
-			ss << std::setprecision(6) << _ratioX;
+			ss << setprecision(6) << _ratioX;
 		else
-			ss << std::setprecision(6) << _ratioX << ", " << _ratioY;
+			ss << setprecision(6) << _ratioX << ", " << _ratioY;
 		return ss.str();
 	}
 
