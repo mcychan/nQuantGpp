@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include <algorithm>
+#include <chrono>
 #include <clocale>
 #include <iostream>
 #include <fcntl.h>
@@ -269,6 +270,7 @@ int main(int argc, char** argv)
 		source = imread(sourceFile, IMREAD_UNCHANGED);
 
 	if (!source.empty()) {
+		auto start = chrono::steady_clock::now();
 		if (!fileExists(targetDir))
 			targetDir = fs::path(sourceFile).parent_path().string();
 		
@@ -288,6 +290,9 @@ int main(int argc, char** argv)
 		}
 		else
 			QuantizeImage(algo, sourceFile, targetDir, source, nMaxColors, dither);
+
+		auto dur = chrono::duration_cast<chrono::microseconds>(chrono::steady_clock::now() - start).count() / 1000000.0;
+		tcout << "Completed in " << dur << " secs." << endl;
 	}
 	else
 		tcout << "Failed to read image in '" << sourceFile.c_str() << "' file";
