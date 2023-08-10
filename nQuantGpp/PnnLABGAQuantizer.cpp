@@ -81,7 +81,7 @@ namespace PnnLABQuant
 	using AmplifyFn = function<double(const bool)>;
 
 	void PnnLABGAQuantizer::calculateError(vector<double>& errors) {
-		auto maxError = maxRatio < .1 ? .5 : .0625;
+		auto maxError = maxRatio < .1 ? .25 : .0625;
 		if (m_pq->hasAlpha())
 			maxError = 1;
 
