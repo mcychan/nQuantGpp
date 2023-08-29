@@ -16,44 +16,46 @@
 #include <iomanip>
 
 namespace PnnLABQuant
-{	
-	int _bitmapWidth, _dp = 1, _type = 0;
+{
+	int _dp = 1, _type = 0;
 	uint _nMaxColors = 256;
 	double minRatio = 0, maxRatio = 1.0;
 
 	static unordered_map<string, vector<double> > _fitnessMap;
 	static shared_mutex _mutex;
 
-	PnnLABGAQuantizer::PnnLABGAQuantizer(PnnLABQuantizer& pq, Mat srcImg, uint nMaxColors) {
+	PnnLABGAQuantizer::PnnLABGAQuantizer(PnnLABQuantizer& pq, const vector<shared_ptr<Mat> >& srcImgs, uint nMaxColors) {
 		// increment value when criteria violation occurs
 		_objectives.resize(4);
-		_bitmapWidth = srcImg.cols;
-		srand(_bitmapWidth * srcImg.rows);
+		srand(srcImgs[0]->cols * srcImgs[0]->rows);
 		
 		m_pq = make_unique<PnnLABQuantizer>(pq);
 		if(pq.IsGA())
 			return;
 
 		clear();
-		_nMaxColors = nMaxColors;	
+		_nMaxColors = nMaxColors;
+		m_pixelsList.clear();
 
 		bool hasSemiTransparency = false;
-		m_pixels = make_shared<Mat4b>(srcImg.rows, _bitmapWidth, Scalar(0, 0, 0, UCHAR_MAX)); 
-		m_pq->grabPixels(srcImg, *m_pixels, _nMaxColors, hasSemiTransparency);
-		_type = srcImg.type();
+		for(auto& srcImg : srcImgs) {
+			auto pixels = make_shared<Mat4b>(srcImg->rows, srcImg->cols, Scalar(0, 0, 0, UCHAR_MAX));
+			m_pq->grabPixels(*srcImg, *pixels, _nMaxColors, hasSemiTransparency);
+			m_pixelsList.emplace_back(pixels);
+			_type = srcImg->type();
+		}
 		minRatio = (hasSemiTransparency || nMaxColors < 64) ? .0111 : .85;
 		maxRatio = min(1.0, nMaxColors / ((nMaxColors < 64) ? 400.0 : 50.0));
 		_dp = maxRatio < .1 ? 10000 : 100;
 	}
 
-	PnnLABGAQuantizer::PnnLABGAQuantizer(PnnLABQuantizer& pq, const shared_ptr<Mat4b> pixels, int bitmapWidth, uint nMaxColors)
+	PnnLABGAQuantizer::PnnLABGAQuantizer(PnnLABQuantizer& pq, const vector<shared_ptr<Mat4b> > & pixelsList, const uint& nMaxColors)
 	{
 		m_pq = make_unique<PnnLABQuantizer>(pq);
 		// increment value when criteria violation occurs
 		_objectives.resize(4);
-		m_pixels = pixels;
-		_bitmapWidth = bitmapWidth;
-		srand(pixels->rows * pixels->cols);
+		m_pixelsList = pixelsList;
+		srand(m_pixelsList[0]->rows * m_pixelsList[0]->cols);
 		_nMaxColors = nMaxColors;
 	}
 
@@ -78,34 +80,23 @@ namespace PnnLABQuant
 		return vector<double>();
 	}
 
-	using AmplifyFn = function<double(const bool)>;
-
 	void PnnLABGAQuantizer::calculateError(vector<double>& errors) {
-		auto maxError = maxRatio < .1 ? .25 : .0625;
+		auto maxError = maxRatio < .1 ? .5 : .0625;
 		if (m_pq->hasAlpha())
 			maxError = 1;
 
 		auto fitness = 0.0;
-		bool tooSmall = false; // any error < exp(1.0) concluded as too small
-		for (int i = 0; i < errors.size(); ++i) {
-			errors[i] /= maxError * m_pixels->rows * m_pixels->cols;
-			if (errors[i] < 3)
-				tooSmall = true;
-		}
-
-		AmplifyFn amplifyFn = [tooSmall](const double val) -> double {
-			if (tooSmall)
-				return M_PI * val;
-			return .5 * M_PI * val;
-		};
+		int length = accumulate(begin(m_pixelsList), end(m_pixelsList), 0, [](int i, const shared_ptr<Mat4b>& pixels){
+			return pixels->rows * pixels->cols + i;
+		});
+		for (int i = 0; i < errors.size(); ++i)
+			errors[i] /= maxError * length;
 
 		for (int i = 0; i < errors.size(); ++i) {
-			if (i == 0 && errors[i] > maxError)
-				errors[i] *= amplifyFn(errors[i]);
-			else if (errors[i] > (2 * maxError))
-				errors[i] *= amplifyFn(errors[i]);
+			if (i > 0)
+				errors[i] /= 2.55;
 			fitness -= errors[i];
-		}		
+		}
 
 		_objectives = errors;
 		_fitness = fitness;
@@ -115,7 +106,7 @@ namespace PnnLABQuant
 		auto ratioKey = getRatioKey();
 		auto objectives = findByRatioKey(ratioKey);
 		if (!objectives.empty()) {
-			_fitness = -1.0 * accumulate(objectives.begin(), objectives.end(), 0);
+			_fitness = -1.0 * accumulate(objectives.begin(), objectives.end(), 0.0);
 			_objectives = objectives;
 			return;
 		}
@@ -125,37 +116,38 @@ namespace PnnLABQuant
 		
 		auto scalar = m_pq->hasAlpha() ? Scalar(0, 0, 0, UCHAR_MAX) : Scalar(0, 0, 0);
 		auto palette = make_shared<Mat>(_nMaxColors, 1, _type, scalar);
-		m_pq->pnnquan(*m_pixels, *palette, _nMaxColors);
+		m_pq->pnnquan(*m_pixelsList[0], *palette, _nMaxColors);
 
 		auto errors = _objectives;
 		fill(errors.begin(), errors.end(), 0);
 
 		int threshold = maxRatio < .1 ? -64 : -112;
 		int pixelIndex = 0;
-		for (int y = 0; y < m_pixels->rows; ++y)
-		{
-			for (int x = 0; x < m_pixels->cols; ++x, ++pixelIndex)
-			{
-				if(BlueNoise::RAW_BLUE_NOISE[pixelIndex & 4095] > threshold)
-					continue;
+		for (auto& pixels : m_pixelsList) {
+			for (int y = 0; y < pixels->rows; ++y) {
+				for (int x = 0; x < pixels->cols; ++x, ++pixelIndex)
+				{
+					if(BlueNoise::RAW_BLUE_NOISE[pixelIndex & 4095] > threshold)
+						continue;
 
-				auto c = m_pixels->at<Vec4b>(y, x);
-				CIELABConvertor::Lab lab1, lab2;
-				m_pq->GetLab(c, lab1);
-				auto qPixelIndex = m_pq->nearestColorIndex(*palette, c, pixelIndex);
-				Vec4b c2;
-				GrabPixel(c2, *palette, qPixelIndex, 0);
-				m_pq->GetLab(c2, lab2);
+					auto c = pixels->at<Vec4b>(y, x);
+					CIELABConvertor::Lab lab1, lab2;
+					m_pq->GetLab(c, lab1);
+					auto qPixelIndex = m_pq->nearestColorIndex(*palette, c, pixelIndex);
+					Vec4b c2;
+					GrabPixel(c2, *palette, qPixelIndex, 0);
+					m_pq->GetLab(c2, lab2);
 
-				if (m_pq->hasAlpha()) {
-					errors[0] += sqr(lab2.L - lab1.L);
-					errors[1] += sqr(lab2.A - lab1.A);
-					errors[2] += sqr(lab2.B - lab1.B);
-					errors[3] += sqr(lab2.alpha - lab1.alpha) / exp(1.5);
-				}
-				else {
-					errors[0] += abs(lab2.L - lab1.L);
-					errors[1] += sqrt(sqr(lab2.A - lab1.A) + sqr(lab2.B - lab1.B));
+					if (m_pq->hasAlpha()) {
+						errors[0] += sqr(lab2.L - lab1.L);
+						errors[1] += sqr(lab2.A - lab1.A);
+						errors[2] += sqr(lab2.B - lab1.B);
+						errors[3] += sqr(lab2.alpha - lab1.alpha) / exp(1.5);
+					}
+					else {
+						errors[0] += abs(lab2.L - lab1.L);
+						errors[1] += sqrt(sqr(lab2.A - lab1.A) + sqr(lab2.B - lab1.B));
+					}
 				}
 			}
 		}
@@ -165,17 +157,27 @@ namespace PnnLABQuant
 		_fitnessMap.insert({ ratioKey, _objectives });
 	}
 	
-	Mat PnnLABGAQuantizer::QuantizeImage(vector<uchar>& bytes, bool dither) {
+	vector<shared_ptr<Mat> > PnnLABGAQuantizer::QuantizeImage(vector<vector<uchar> >& bytesList, bool dither) {
 		m_pq->setRatio(_ratioX, _ratioY);
 		auto scalar = m_pq->hasAlpha() ? Scalar(0, 0, 0, UCHAR_MAX) : Scalar(0, 0, 0);
 		auto palette = make_shared<Mat>(_nMaxColors, 1, _type, scalar);
 
-		m_pq->pnnquan(*m_pixels, *palette, _nMaxColors);
-		return m_pq->QuantizeImage(*m_pixels, *palette, bytes, _nMaxColors, dither);
+		m_pq->pnnquan(*m_pixelsList[0], *palette, _nMaxColors);
+		vector<shared_ptr<Mat> > imgList;
+		for(auto& pixels : m_pixelsList) {
+			vector<uchar> bytes;
+			auto pImg = make_shared<Mat>(m_pq->QuantizeImage(*pixels, *palette, bytes, _nMaxColors, dither));
+			bytesList.emplace_back(bytes);
+			if(imgList.empty() || (pImg->rows * pImg->cols) > _nMaxColors)
+				imgList.emplace_back(pImg);
+		}
+		m_pq->clear();
+		return imgList;
 	}
 
 	void PnnLABGAQuantizer::clear() {
 		unique_lock<shared_mutex> lock(_mutex);
+		m_pixelsList.clear();
 		_fitnessMap.clear();
 	}
 
@@ -275,7 +277,7 @@ namespace PnnLABQuant
 	}
 
 	shared_ptr<PnnLABGAQuantizer> PnnLABGAQuantizer::makeNewFromPrototype() {
-		auto child = make_shared<PnnLABGAQuantizer>(*m_pq, m_pixels, _bitmapWidth, _nMaxColors);
+		auto child = make_shared<PnnLABGAQuantizer>(*m_pq, m_pixelsList, _nMaxColors);
 		auto minRatio2 = 2.0 * minRatio;
 		if(minRatio2 > 1)
 			minRatio2 = 0;

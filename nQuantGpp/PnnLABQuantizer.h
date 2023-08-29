@@ -44,11 +44,11 @@ namespace PnnLABQuant
 			void find_nn(pnnbin* bins, int idx, bool texicab);
 			ushort closestColorIndex(const Mat palette, const Vec4b& c, const uint pos);
 			bool quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const bool dither);
-			void clear();
 
 		public:
 			PnnLABQuantizer();
 			PnnLABQuantizer(const PnnLABQuantizer& quantizer);
+			void clear();
 			void pnnquan(const Mat4b pixels, Mat palette, uint& nMaxColors);
 			bool IsGA() const;
 			void GetLab(const Vec4b& pixel, CIELABConvertor::Lab& lab1);

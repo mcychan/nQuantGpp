@@ -37,18 +37,18 @@ string algs[] = { "PNN", "PNNLAB", "PNNLAB+", "NEU", "WU", "EAS", "SPA", "DIV", 
 
 void PrintUsage()
 {
-    tcout << endl;
-    tcout << "usage: nQuantGpp <input image path> [options]" << endl;
-    tcout << endl;
-    tcout << "Valid options:" << endl;
+	tcout << endl;
+	tcout << "usage: nQuantGpp <input image path> [options]" << endl;
+	tcout << endl;
+	tcout << "Valid options:" << endl;
 	tcout << "  /a : Algorithm used - Choose one of them, otherwise give you the defaults from [";
 	int i = 0;	
 	for(; i<sizeof(algs)/sizeof(string) - 1; ++i)
 		tcout << algs[i] << ", ";
 	tcout << algs[i] << "] ." << endl;
-    tcout << "  /m : Max Colors (pixel-depth) - Maximum number of colors for the output format to support. The default is 256 (8-bit)." << endl;
+	tcout << "  /m : Max Colors (pixel-depth) - Maximum number of colors for the output format to support. The default is 256 (8-bit)." << endl;
 	tcout << "  /d : Dithering or not? y or n." << endl;
-    tcout << "  /o : Output image file dir. The default is <source image path directory>" << endl;
+	tcout << "  /o : Output image file dir. The default is <source image path directory>" << endl;
 }
 
 bool isdigit(const char* string) {
@@ -129,7 +129,37 @@ inline bool fileExists(const string& path)
 	return fs::exists(fs::path(path));
 }
 
-vector<uchar> QuantizeImage(const string& algorithm, const string& sourceFile, string& targetDir, const Mat source, uint nMaxColors, bool dither)
+bool OutputImage(const fs::path& sourcePath, const string& algorithm, const uint& nMaxColors, string& targetDir, vector<uchar>& bytes, Mat dest)
+{
+	auto fileName = sourcePath.filename().string();
+	fileName = fileName.substr(0, fileName.find_last_of('.'));
+
+	targetDir = fileExists(targetDir) ? fs::canonical(fs::path(targetDir)).string() : fs::current_path().string();
+	auto destPath = targetDir + "/" + fileName + "-";
+	string algo(algorithm.begin(), algorithm.end());
+	destPath += algo + "quant";
+
+	auto targetExtension = ".png";
+	destPath += std::to_string(nMaxColors) + targetExtension;
+
+	try {
+		if(nMaxColors > 256)
+			imwrite(destPath, dest);
+		else {
+			ofstream outfile(destPath, ios::binary);
+			outfile.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+			outfile.close();
+		}
+		tcout << "Converted image: " << destPath << endl;
+		return true;
+	}
+	catch (...) {
+		tcout << "Failed to save image in '" << destPath << "' file" << endl;
+		return false;
+	}
+}
+
+vector<uchar> QuantizeImage(const string& algorithm, const string& sourceFile, string& targetDir, Mat source, uint nMaxColors, bool dither)
 {
 	Mat dest;
 	vector<uchar> bytes;
@@ -143,12 +173,16 @@ vector<uchar> QuantizeImage(const string& algorithm, const string& sourceFile, s
 	}
 	else if (algorithm == "PNNLAB+") {
 		PnnLABQuant::PnnLABQuantizer pnnLABQuantizer;
-		PnnLABQuant::PnnLABGAQuantizer pnnLABGAQuantizer(pnnLABQuantizer, source, nMaxColors);
+		vector<shared_ptr<Mat> > sources(1, make_shared<Mat>(source));
+		PnnLABQuant::PnnLABGAQuantizer pnnLABGAQuantizer(pnnLABQuantizer, sources, nMaxColors);
 		nQuantGA::APNsgaIII<PnnLABQuant::PnnLABGAQuantizer> alg(pnnLABGAQuantizer);
 		alg.run(9999, -numeric_limits<double>::epsilon());
 		auto pGAq = alg.getResult();
 		cout << "\n" << pGAq->getResult() << endl;
-		dest = pGAq->QuantizeImage(bytes, dither);
+		vector<vector<uchar> > bytesList;
+		auto pDest = pGAq->QuantizeImage(bytesList, dither)[0];
+		dest = *pDest;
+		bytes = bytesList[0];
 	}
 	else if (algorithm == "NEU") {
 		NeuralNet::NeuQuantizer neuQuantizer;
@@ -188,32 +222,56 @@ vector<uchar> QuantizeImage(const string& algorithm, const string& sourceFile, s
 		return bytes;
 
 	auto sourcePath = fs::canonical(fs::path(sourceFile));
-	auto fileName = sourcePath.filename().string();
-	fileName = fileName.substr(0, fileName.find_last_of('.'));
-
-	targetDir = fileExists(targetDir) ? fs::canonical(fs::path(targetDir)).string() : fs::current_path().string();
-	auto destPath = targetDir + "/" + fileName + "-";
-	string algo(algorithm.begin(), algorithm.end());
-	destPath += algo + "quant";
-
-	auto targetExtension = ".png";
-	destPath += std::to_string(nMaxColors) + targetExtension;
-
-	try {
-		if(nMaxColors > 256)
-			imwrite(destPath, dest);
-		else {
-			ofstream outfile(destPath, ios::binary);
-			outfile.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-			outfile.close();
-		}
-		tcout << "Converted image: " << destPath << endl;
-	}
-	catch (...) {
-		tcout << "Failed to save image in '" << destPath << "' file" << endl;
-	}
+	OutputImage(sourcePath, algorithm, nMaxColors, targetDir, bytes, dest);
 
 	return bytes;
+}
+
+void OutputImages(const fs::path& sourceDir, string& targetDir, const uint& nMaxColors, const bool dither)
+{
+	auto start = chrono::steady_clock::now();
+
+	vector<fs::path> sourcePaths;
+	vector<shared_ptr<Mat> > pSources;
+	for (const auto& entry : fs::recursive_directory_iterator(sourceDir)) {
+		if (entry.is_regular_file() && !entry.is_symlink()) {
+			Mat source;
+			if(entry.path().extension() == ".gif") {
+				int position = 0;
+				auto cap = VideoCapture(entry.path().string());
+				cap.set(CAP_PROP_POS_FRAMES, position);
+				cap.read(source);
+				cap.release();
+			}
+			else
+				source = imread(entry.path().string(), IMREAD_UNCHANGED);
+
+			if (source.empty())
+				continue;
+			sourcePaths.emplace_back(entry.path());
+			pSources.emplace_back(make_shared<Mat>(source));
+		}
+	}
+
+	PnnLABQuant::PnnLABQuantizer pnnLABQuantizer;
+	PnnLABQuant::PnnLABGAQuantizer pnnLABGAQuantizer(pnnLABQuantizer, pSources, nMaxColors);
+	nQuantGA::APNsgaIII<PnnLABQuant::PnnLABGAQuantizer> alg(pnnLABGAQuantizer);
+	alg.run(9999, -numeric_limits<double>::epsilon());
+	auto pGAq = alg.getResult();
+	cout << "\n" << pGAq->getResult() << endl;
+	vector<vector<uchar> > bytesList;
+	auto imgList = pGAq->QuantizeImage(bytesList, dither);
+	if(!bytesList.empty()) {
+		int i = 0;		
+		for(auto& sourcePath : sourcePaths) {
+			int j = std::min(i, (int) imgList.size() - 1);
+			OutputImage(sourcePath, "PNNLAB+", nMaxColors, targetDir, bytesList[i], *imgList[j]);
+			++i;
+		}
+	}
+
+	auto dur = chrono::duration_cast<chrono::microseconds>(chrono::steady_clock::now() - start).count() / 1000000.0;
+	cout << "Completed in " << dur << " secs." << endl;
 }
 
 int main(int argc, char** argv)
@@ -251,13 +309,18 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-#ifdef _DEBUG
+	if(fs::is_directory(fs::status(sourceFile.c_str())) ) {
+		if (!targetDir.empty() && !fileExists(targetDir))
+			fs::create_directories(targetDir);
+		OutputImages(sourceFile, targetDir, nMaxColors, dither);
+		return 0;
+	}
+
 	auto sourcePath = fs::canonical(fs::path(sourceFile));
 	sourceFile = sourcePath.string();
-#endif
 
 	sourceFile = (sourceFile[sourceFile.length() - 1] != '/' && sourceFile[sourceFile.length() - 1] != '\\') ? sourceFile : sourceFile.substr(0, sourceFile.find_last_of("\\/"));
-	auto fileExtension = sourceFile.substr(sourceFile.find_last_of('.'));
+	auto fileExtension = sourcePath.extension();
 	Mat source;
 	if(fileExtension == ".gif") {
 		int position = 0;
