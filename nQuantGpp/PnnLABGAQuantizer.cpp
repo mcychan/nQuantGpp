@@ -127,7 +127,7 @@ namespace PnnLABQuant
 			for (int y = 0; y < pixels->rows; ++y) {
 				for (int x = 0; x < pixels->cols; ++x, ++pixelIndex)
 				{
-					if(BlueNoise::RAW_BLUE_NOISE[pixelIndex & 4095] > threshold)
+					if(BlueNoise::TELL_BLUE_NOISE[pixelIndex & 4095] > threshold)
 						continue;
 
 					auto c = pixels->at<Vec4b>(y, x);

@@ -3,7 +3,7 @@
 
 namespace BlueNoise
 {
-	extern const char RAW_BLUE_NOISE[];
+	extern const char TELL_BLUE_NOISE[];
 	
 	Vec4b diffuse(const Vec4b& pixel, const Vec4b& qPixel, const float weight, const float strength, const int x, const int y);
 
