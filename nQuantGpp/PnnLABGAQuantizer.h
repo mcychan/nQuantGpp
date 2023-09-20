@@ -1,6 +1,7 @@
 #pragma once
 #include "PnnLABQuantizer.h"
 #include "ga/Chromosome.h"
+#include "ga/APNsgaIII.h"
 
 namespace PnnLABQuant
 {

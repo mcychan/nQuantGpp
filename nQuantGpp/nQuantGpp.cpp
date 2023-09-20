@@ -17,7 +17,6 @@ namespace fs = std::filesystem;
 #include "PnnQuantizer.h"
 #include "NeuQuantizer.h"
 #include "WuQuantizer.h"
-#include "ga/APNsgaIII.h"
 #include "PnnLABQuantizer.h"
 #include "PnnLABGAQuantizer.h"
 #include "EdgeAwareSQuantizer.h"
@@ -175,7 +174,7 @@ vector<uchar> QuantizeImage(const string& algorithm, const string& sourceFile, s
 		PnnLABQuant::PnnLABQuantizer pnnLABQuantizer;
 		vector<shared_ptr<Mat> > sources(1, make_shared<Mat>(source));
 		PnnLABQuant::PnnLABGAQuantizer pnnLABGAQuantizer(pnnLABQuantizer, sources, nMaxColors);
-		nQuantGA::APNsgaIII<PnnLABQuant::PnnLABGAQuantizer> alg(pnnLABGAQuantizer);
+		nQuantGA::APNsgaIII alg(pnnLABGAQuantizer);
 		alg.run(9999, -numeric_limits<double>::epsilon());
 		auto pGAq = alg.getResult();
 		cout << "\n" << pGAq->getResult() << endl;

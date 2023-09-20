@@ -212,5 +212,5 @@ double CIELABConvertor::Y_Diff(const Vec4b& c1, const Vec4b& c2)
 
 	auto y = pixel2Y(c1);
 	auto y2 = pixel2Y(c2);
-	return abs(y2 - y) / 100;
+	return abs(y2 - y) * XYZ_WHITE_REFERENCE_Y;
 }
