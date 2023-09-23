@@ -195,8 +195,8 @@ namespace Peano
 		nMaxColors = palette.cols * palette.rows;
 		if (nMaxColors / weight > 5000 && (weight > .045 || (weight > .01 && nMaxColors <= 64)))
 			ditherMax = (uchar)sqr(5 + edge);
-		else if (nMaxColors > 16 && nMaxColors < 256)
-			ditherMax = (nMaxColors / weight) < 3200 ? (uchar)sqr(5 + edge) : (uchar)sqr(3 + edge);
+		else if (nMaxColors / weight < 3200 && nMaxColors > 16 && nMaxColors < 256)
+			ditherMax = (uchar)sqr(5 + edge);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		auto pWeights = make_unique<float[]>(DITHER_MAX);
 		m_weights = pWeights.get();
