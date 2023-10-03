@@ -8,12 +8,14 @@ Copyright (c) 2023 Miller Cy Chan
 #include "CIELABConvertor.h"
 
 #include <memory>
-#include <deque>
+#include <list>
+#include <algorithm>
 
 namespace Peano
 {
 	struct ErrorBox
 	{
+		double yDiff = 0;
 		float p[4] = { 0 };
 
 		ErrorBox() {
@@ -34,6 +36,7 @@ namespace Peano
 		}
 	};
 
+	bool sortedByYDiff;
 	uint m_width, m_height;
 	const Mat4b* m_pPixels4b;
 	const Mat* m_pPalette;
@@ -41,8 +44,8 @@ namespace Peano
 	DitherFn m_ditherFn;
 	float* m_saliencies;
 	GetColorIndexFn m_getColorIndexFn;
-	deque<ErrorBox> errorq;
-	float* m_weights;
+	list<ErrorBox> errorq;
+	vector<float> m_weights;
 	short* m_lookup;
 	static uchar DITHER_MAX = 9, ditherMax;
 	static int nMaxColors, thresold;
@@ -52,13 +55,49 @@ namespace Peano
 		return (T(0) < val) - (val < T(0));
 	}
 
+	template<typename T>
+	void insert_in_order(list<T>& items, T& element, int (*compareFn)(const T& a, const T& b)) {
+		auto begin = items.begin();
+		auto end = items.end();
+		while (begin != end && compareFn(*begin, element) < 0)
+			++begin;
+
+		items.insert(begin, element);
+	}
+
+	void initWeights(int size) {
+		/* Dithers all pixels of the image in sequence using
+		 * the Gilbert path, and distributes the error in
+		 * a sequence of pixels size.
+		 */
+		errorq.resize(size);
+		const auto weightRatio = (float)pow(BLOCK_SIZE + 1.0f, 1.0f / (size - 1.0f));
+		auto weight = 1.0f;
+		auto sumweight = 0.0f;
+		m_weights.resize(size);
+		for (int c = 0; c < size; ++c) {
+			sumweight += (m_weights[size - c - 1] = 1.0f / weight);
+			weight *= weightRatio;
+		}
+
+		weight = 0.0f; /* Normalize */
+		for (int c = 0; c < size; ++c)
+			weight += (m_weights[c] /= sumweight);
+		m_weights[0] += 1.0f - weight;
+	}
+
+	inline int compare(const ErrorBox& o1, const ErrorBox& o2)
+	{
+		return o1.yDiff - o2.yDiff;
+	}
+
 	void ditherPixel(int x, int y)
 	{
 		int bidx = x + y * m_width;
 		auto& pixel = m_pPixels4b->at<Vec4b>(y, x);
 
 		ErrorBox error(pixel);
-		int i = 0;
+		int i = sortedByYDiff ? m_weights.size() - 1 : 0;
 		auto maxErr = DITHER_MAX - 1;
 		for (auto& eb : errorq) {
 			for (int j = 0; j < eb.length(); ++j) {
@@ -66,7 +105,7 @@ namespace Peano
 				if (error[j] > maxErr)
 					maxErr = error[j];
 			}
-			++i;
+			i += sortedByYDiff ? -1 : 1;
 		}
 
 		auto b_pix = static_cast<uchar>(min(UCHAR_MAX, (int) max(error[0], 0.0f)));
@@ -94,7 +133,11 @@ namespace Peano
 		else
 			qPixelIndex = m_ditherFn(*m_pPalette, c2, bidx);
 
-		errorq.pop_front();
+		if(errorq.size() >= DITHER_MAX)
+			errorq.pop_front();
+		else if(!errorq.empty())
+			initWeights(errorq.size());
+
 		c2 = m_pPalette->at<Vec4b>(qPixelIndex, 0);
 		error[0] = b_pix - c2[0];
 		error[1] = g_pix - c2[1];
@@ -103,8 +146,8 @@ namespace Peano
 
 		auto denoise = nMaxColors > 2;
 		auto diffuse = BlueNoise::TELL_BLUE_NOISE[bidx & 4095] > thresold;
-		auto yDiff = diffuse ? 1 : CIELABConvertor::Y_Diff(pixel, c2);
-		auto illusion = !diffuse && BlueNoise::TELL_BLUE_NOISE[(int)(yDiff * 4096) & 4095] > thresold;
+		error.yDiff = sortedByYDiff ? CIELABConvertor::Y_Diff(pixel, c2) : 1;
+		auto illusion = !diffuse && BlueNoise::TELL_BLUE_NOISE[(int)(error.yDiff * 4096) & 4095] > thresold;
 
 		int errLength = denoise ? error.length() - 1 : 0;
 		for (int j = 0; j < errLength; ++j) {
@@ -113,14 +156,17 @@ namespace Peano
 					error[j] = (float)tanh(error.p[j] / maxErr * 8) * (ditherMax - 1);
 				else {
 					if (illusion)
-						error[j] = (float)(error.p[j] / maxErr * yDiff) * (ditherMax - 1);
+						error[j] = (float)(error.p[j] / maxErr * error.yDiff) * (ditherMax - 1);
 					else
 						error[j] /= (float)(1 + sqrt(ditherMax));
 				}
 			}
 		}
 
-		errorq.emplace_back(error);
+		if (sortedByYDiff)
+			insert_in_order<ErrorBox>(errorq, error, &compare);
+		else
+			errorq.emplace_back(error);
 	}
 
 	void generate2d(int x, int y, int ax, int ay, int bx, int by) {
@@ -198,29 +244,11 @@ namespace Peano
 		else if (nMaxColors / weight < 3200 && nMaxColors > 16 && nMaxColors < 256)
 			ditherMax = (uchar)sqr(5 + edge);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
-		auto pWeights = make_unique<float[]>(DITHER_MAX);
-		m_weights = pWeights.get();
+		m_weights.clear();
 		auto pLookup = make_unique<short[]>(USHRT_MAX + 1);
 		m_lookup = pLookup.get();
 
-		/* Dithers all pixels of the image in sequence using
-		 * the Gilbert path, and distributes the error in
-		 * a sequence of DITHER_MAX pixels.
-		 */
-		errorq.clear();
-		errorq.resize(DITHER_MAX);
-		const auto weightRatio = (float)pow(BLOCK_SIZE + 1.0f, 1.0f / (DITHER_MAX - 1.0f));
-		weight = 1.0f;
-		auto sumweight = 0.0f;
-		for (int c = 0; c < DITHER_MAX; ++c) {
-			sumweight += (m_weights[DITHER_MAX - c - 1] = 1.0f / weight);
-			weight *= weightRatio;
-		}
-
-		weight = 0.0f; /* Normalize */
-		for (int c = 0; c < DITHER_MAX; ++c)
-			weight += (m_weights[c] /= sumweight);
-		m_weights[0] += 1.0f - weight;
+		initWeights(sortedByYDiff ? 1 : DITHER_MAX);
 
 		if (m_width >= m_height)
 			generate2d(0, 0, m_width, 0, 0, m_height);
