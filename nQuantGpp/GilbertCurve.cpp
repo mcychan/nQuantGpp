@@ -102,6 +102,9 @@ namespace Peano
 		int i = sortedByYDiff ? m_weights.size() - 1 : 0;
 		auto maxErr = DITHER_MAX - 1;
 		for (auto& eb : errorq) {
+			if (i < 0 || i >= m_weights.size())
+				break;
+
 			for (int j = 0; j < eb.length(); ++j) {
 				error[j] += eb[j] * m_weights[i];
 				if (error[j] > maxErr)
@@ -237,10 +240,12 @@ namespace Peano
 		m_getColorIndexFn = getColorIndexFn;
 		auto hasAlpha = weight < 0;
 		weight = abs(weight);
+
+		nMaxColors = palette.cols * palette.rows;
+		sortedByYDiff = !hasAlpha && nMaxColors >= 128 && weight >= .04;
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
-		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge) : DITHER_MAX;
-		nMaxColors = palette.cols * palette.rows;
+		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge) : DITHER_MAX;		
 		if (nMaxColors / weight > 5000 && (weight > .045 || (weight > .01 && nMaxColors <= 64)))
 			ditherMax = (uchar)sqr(5 + edge);
 		else if (nMaxColors / weight < 3200 && nMaxColors > 16 && nMaxColors < 256)
@@ -250,7 +255,8 @@ namespace Peano
 		auto pLookup = make_unique<short[]>(USHRT_MAX + 1);
 		m_lookup = pLookup.get();
 
-		initWeights(sortedByYDiff ? 1 : DITHER_MAX);
+		if(!sortedByYDiff)
+			initWeights(DITHER_MAX);
 
 		if (m_width >= m_height)
 			generate2d(0, 0, m_width, 0, 0, m_height);
