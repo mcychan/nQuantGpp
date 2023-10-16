@@ -92,7 +92,7 @@ jobs:
       - name: Build
         # Execute the build.  You can specify a specific target with "--target <NAME>"
         run: |
-          cmake --build ./build --config $BUILD_TYPE
+          cmake --build ./build --config Release
   
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
