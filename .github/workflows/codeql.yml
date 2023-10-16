@@ -28,8 +28,8 @@ jobs:
     #   - https://gh.io/supported-runners-and-hardware-resources
     #   - https://gh.io/using-larger-runners
     # Consider using larger runners for possible analysis time improvements.
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
-    timeout-minutes: ${{ (matrix.language == 'swift' && 120) || 360 }}
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 360
     permissions:
       actions: read
       contents: read
@@ -48,14 +48,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Install OpenCV
-      uses: rayandrews/with-opencv-action@v1
-      with:  
-        dir: ./opencv-install
-        cached: ${{ steps.opencv-cache.outputs.cache-hit }}
-        opencv-version: '4.7.0'
-        opencv-extra-modules: false
-        ENABLE_PRECOMPILED_HEADERS: OFF
+    - name: Cache OpenCV
+      uses: UrielCh/opencv-cache-action@V1
+      with:
+        branch: 4.x
+        BUILD_LIST: core     
     
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
