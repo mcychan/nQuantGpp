@@ -311,7 +311,7 @@ namespace PnnQuant
 		if (c[3] <= alphaThreshold)
 			return nearestColorIndex(palette, c, pos);
 
-		const auto nMaxColors = palette.rows;
+		const auto nMaxColors = (ushort) palette.rows;
 		vector<ushort> closest(4);
 		auto argb = GetArgb8888(c);
 		auto got = closestMap.find(argb);

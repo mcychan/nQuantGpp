@@ -141,8 +141,8 @@ namespace PnnLABQuant
 	{
 		short quan_rt = 1;
 		vector<pnnbin> bins(USHRT_MAX + 1);
-		auto length = pixels.rows * pixels.cols;
-		saliencies.resize(pixels.rows * pixels.cols);
+		auto length = (size_t) pixels.rows * pixels.cols;
+		saliencies.resize(length);
 		auto saliencyBase = .1f;
 
 		/* Build histogram */
@@ -452,7 +452,7 @@ namespace PnnLABQuant
 		if (c[3] <= alphaThreshold)
 			return nearestColorIndex(palette, c, pos);
 
-		const auto nMaxColors = palette.rows;
+		const auto nMaxColors = (ushort) palette.rows;
 		vector<ushort> closest(4);
 		auto argb = GetArgb8888(c);
 		auto got = closestMap.find(argb);

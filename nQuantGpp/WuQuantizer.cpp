@@ -609,7 +609,7 @@ namespace nQuant
 		if (c[3] <= alphaThreshold)
 			c = m_transparentColor;
 
-		const auto nMaxColors = palette.rows;
+		const auto nMaxColors = (ushort) palette.rows;
 		if (nMaxColors > 2 && m_transparentPixelIndex >= 0 && c[3] > alphaThreshold)
 			k = 1;
 
@@ -722,7 +722,7 @@ namespace nQuant
 		}
 		nearestMap.clear();
 
-		short paletteIndex = (m_transparentPixelIndex < 0) ? 0 : 1;
+		uint paletteIndex = (m_transparentPixelIndex < 0) ? 0 : 1;
 		for (; paletteIndex < colorCount; ++paletteIndex) {
 			if (sums[paletteIndex] > 0) {
 				alphas[paletteIndex] /= sums[paletteIndex];

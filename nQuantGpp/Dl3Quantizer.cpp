@@ -270,7 +270,7 @@ namespace Dl3Quant
 		if (c[3] <= alphaThreshold)
 			c = m_transparentColor;
 
-		const auto nMaxColors = palette.rows;
+		const auto nMaxColors = (ushort) palette.rows;
 		auto argb = GetArgb8888(c0);
 
 		vector<ushort> closest(5);

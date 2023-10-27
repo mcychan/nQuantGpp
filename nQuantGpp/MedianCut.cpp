@@ -546,7 +546,7 @@ namespace MedianCutQuant
 		double total_error = 0;
 		for (ushort i = 0; i < box.colors; ++i) {
 			const int ind = box.ind + i;
-			total_error += colorDiff(avg, hi[ind].fcolor) * hi[ind].perceptual_weight;
+			total_error += (double) colorDiff(avg, hi[ind].fcolor) * hi[ind].perceptual_weight;
 		}
 
 		return total_error;
@@ -631,7 +631,7 @@ namespace MedianCutQuant
 
 			/* store total color popularity (perceptual_weight is approximation of it) */
 			map.palette[bi].popularity = 0;
-			for (ushort i = bv[bi].ind; i < bv[bi].ind + bv[bi].colors; ++i) {
+			for (int i = bv[bi].ind; i < bv[bi].ind + bv[bi].colors; ++i) {
 				const auto& histIterm = hist.histIterms[i];
 				map.palette[bi].popularity += histIterm.perceptual_weight;
 			}
@@ -665,7 +665,7 @@ namespace MedianCutQuant
 	void adjustHistogram(Histogram& hist, const ColorMap& map, const Box* bv, ushort boxes)
 	{
 		for (ushort bi = 0; bi < boxes; ++bi) {
-			for (ushort i = bv[bi].ind; i < bv[bi].ind + bv[bi].colors; ++i) {
+			for (int i = bv[bi].ind; i < bv[bi].ind + bv[bi].colors; ++i) {
 				auto& histIterm = hist.histIterms[i];
 				auto& pixel = map.palette[bi];
 				histIterm.adjusted_weight *= sqrt(1.0 + colorDiff(pixel.fcolor, histIterm.fcolor) / 4.0);
@@ -978,11 +978,12 @@ namespace MedianCutQuant
 	void viterUpdateColor(const FloatPixel& acolor, const float value, const ColorMap& map, uint match, ViterState* average_color)
 	{
 		//match += thread * (VITER_CACHE_LINE_GAP + map.colors);
-		average_color[match].a += acolor.a * value;
-		average_color[match].r += acolor.r * value;
-		average_color[match].g += acolor.g * value;
-		average_color[match].b += acolor.b * value;
-		average_color[match].total += value;
+		const auto val = (double) value;
+		average_color[match].a += acolor.a * val;
+		average_color[match].r += acolor.r * val;
+		average_color[match].g += acolor.g * val;
+		average_color[match].b += acolor.b * val;
+		average_color[match].total += val;
 	}
 
 	uint findSlow(const FloatPixel& px, const ColorMap& map)
@@ -1184,7 +1185,7 @@ namespace MedianCutQuant
 			float diff = 0;
 			uint match = nearestSearch(n, achv[j].fcolor, achv[j].tmp.likely_colormap_index, diff);
 			achv[j].tmp.likely_colormap_index = match; // which centroid it belongs to
-			total_diff += diff * achv[j].perceptual_weight;
+			total_diff += (double) diff * achv[j].perceptual_weight;
 
 			viterUpdateColor(achv[j].fcolor, achv[j].perceptual_weight, map, match, average_color.get());
 
@@ -1392,7 +1393,7 @@ namespace MedianCutQuant
 		if (c[3] <= alphaThreshold)
 			c = m_transparentColor;
 		
-		const auto nMaxColors = palette.rows;
+		const auto nMaxColors = (ushort) palette.rows;
 		if (nMaxColors > 2 && m_transparentPixelIndex >= 0 && c[3] > alphaThreshold)
 			k = 1;
 

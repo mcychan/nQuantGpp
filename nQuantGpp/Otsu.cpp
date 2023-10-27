@@ -41,12 +41,12 @@ namespace OtsuThreshold
 	static short findMax(float* vec, int n)
 	{
 		float maxVec = 0;
-		short idx= 0;
+		short idx = 0;
 
-		for (short i = 1; i < n - 1; ++i) {
+		for (int i = 1; i < n - 1; ++i) {
 			if (vec[i] > maxVec) {
 				maxVec = vec[i];
-				idx = i;
+				idx = (short) i;
 			}
 		}
 		return idx;

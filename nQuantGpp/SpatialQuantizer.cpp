@@ -174,14 +174,16 @@ namespace SpatialQuant
 		{
 			this->width = width;
 			this->height = height;
-			data = make_unique<T[]>(width * height);
+			const auto area = (size_t) (width * height);
+			data = make_unique<T[]>(area);
 		}
 
 		array2d(const array2d<T>& rhs)
 		{
 			width = rhs.width;
 			height = rhs.height;
-			data = make_unique<T[]>(width * height);
+			const auto area = (size_t) (width * height);
+			data = make_unique<T[]>(area);
 			copy(rhs.data.get(), rhs.data.get() + (width * height), data.get());
 		}
 
@@ -299,7 +301,8 @@ namespace SpatialQuant
 			this->width = width;
 			this->height = height;
 			this->depth = depth;
-			data = make_unique<T[]>(width * height * depth);
+			const auto volume = (size_t) (width * height * depth);
+			data = make_unique<T[]>(volume);
 		}
 
 		array3d(const array3d<T>& rhs)
@@ -355,7 +358,8 @@ namespace SpatialQuant
 	}
 
 	void random_permutation_2d(int width, int height, deque<pair<int, int> >& result) {
-		vector<int> perm1d(width * height);
+		const auto area = (size_t) (width * height);
+		vector<int> perm1d(area);
 		random_permutation(perm1d);
 		for (const auto& val : perm1d)
 			result.emplace_front(val % width, val / width);
