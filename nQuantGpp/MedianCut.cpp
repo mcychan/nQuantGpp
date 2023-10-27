@@ -1403,7 +1403,7 @@ namespace MedianCutQuant
 		if (got == closestMap.end()) {
 			closest[2] = closest[3] = SHRT_MAX;
 
-			const auto nMaxColors = palette.rows;
+			const auto nMaxColors = (ushort) palette.rows;
 			for (; k < nMaxColors; ++k) {
 				Vec4b c2;
 				GrabPixel(c2, palette, k, 0);
