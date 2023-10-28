@@ -127,7 +127,7 @@ namespace Peano
 				m_lookup[offset] = m_ditherFn(*m_pPalette, c2, bidx) + 1;
 			qPixelIndex = m_lookup[offset] - 1;
 
-			if (m_saliencies != nullptr && m_saliencies[bidx] > .65f && m_saliencies[bidx] < .7f) {
+			if (m_saliencies != nullptr && CIELABConvertor::Y_Diff(pixel, c2) > nMaxColors - 10) {
 				Vec4b qPixel;
 				GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
 				auto strength = 1 / 3.0f;
