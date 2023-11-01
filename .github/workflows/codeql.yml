@@ -28,7 +28,7 @@ jobs:
     #   - https://gh.io/supported-runners-and-hardware-resources
     #   - https://gh.io/using-larger-runners
     # Consider using larger runners for possible analysis time improvements.
-    runs-on: 'ubuntu-latest'
+    runs-on: 'ubuntu-20.04'
     timeout-minutes: 360
     permissions:
       actions: read
@@ -54,9 +54,6 @@ jobs:
         with:
           path: ./opencv-install
           key: ${{ runner.os }}-opencv-cache
-
-      - name: Update APT
-        run: /usr/bin/sudo apt install -y ca-certificates curl gnupg lsb-release
 
       - name: Install OpenCV
         uses: rayandrews/with-opencv-action@v1
