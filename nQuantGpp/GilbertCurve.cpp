@@ -48,7 +48,7 @@ namespace Peano
 	vector<float> m_weights;
 	short* m_lookup;
 	static uchar DITHER_MAX = 9, ditherMax;
-	static int nMaxColors, thresold;
+	static int nMaxColors, margin, thresold;
 	static const float BLOCK_SIZE = 343.0f;
 
 	template <typename T> int sign(T val) {
@@ -127,7 +127,7 @@ namespace Peano
 				m_lookup[offset] = m_ditherFn(*m_pPalette, c2, bidx) + 1;
 			qPixelIndex = m_lookup[offset] - 1;
 
-			if (m_saliencies != nullptr && CIELABConvertor::Y_Diff(pixel, c2) > nMaxColors - 7) {
+			if (m_saliencies != nullptr && CIELABConvertor::Y_Diff(pixel, c2) > margin) {
 				Vec4b qPixel;
 				GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
 				auto strength = 1 / 3.0f;
@@ -250,6 +250,7 @@ namespace Peano
 			ditherMax = (uchar)sqr(5 + edge);
 		else if (nMaxColors / weight < 3200 && nMaxColors > 16 && nMaxColors < 256)
 			ditherMax = (uchar)sqr(5 + edge);
+		margin = (int) sqr(log2(nMaxColors) - 1);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		m_weights.clear();
 		auto pLookup = make_unique<short[]>(USHRT_MAX + 1);
