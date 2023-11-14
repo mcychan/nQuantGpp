@@ -249,7 +249,7 @@ namespace Peano
 		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge) : DITHER_MAX;		
 		if (nMaxColors / weight > 5000 && (weight > .045 || (weight > .01 && nMaxColors <= 64)))
 			ditherMax = (uchar)sqr(5 + edge);
-		else if (nMaxColors / weight < 3200 && nMaxColors > 16 && nMaxColors < 256)
+		else if (nMaxColors / weight < 3200 && nMaxColors >= 16 && nMaxColors < 256)
 			ditherMax = (uchar)sqr(5 + edge);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		m_weights.clear();
