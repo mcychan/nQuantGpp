@@ -240,16 +240,17 @@ namespace Peano
 		m_getColorIndexFn = getColorIndexFn;
 		auto hasAlpha = weight < 0;
 		weight = abs(weight);
-		margin = weight < .003 ? 12 : 6;
+		margin = weight < .0025 ? 12 : 6;
 
 		nMaxColors = palette.cols * palette.rows;
 		sortedByYDiff = !hasAlpha && nMaxColors >= 128 && weight >= .04;
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
-		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge) : DITHER_MAX;		
+		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge) : DITHER_MAX;
+		int density = nMaxColors > 16 ? 3200 : 1500;
 		if (nMaxColors / weight > 5000 && (weight > .045 || (weight > .01 && nMaxColors <= 64)))
 			ditherMax = (uchar)sqr(5 + edge);
-		else if (nMaxColors / weight < 3200 && nMaxColors >= 16 && nMaxColors < 256)
+		else if (nMaxColors / weight < density && nMaxColors >= 16 && nMaxColors < 256)
 			ditherMax = (uchar)sqr(5 + edge);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		m_weights.clear();
