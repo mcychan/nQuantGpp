@@ -154,7 +154,7 @@ namespace Peano
 		error.yDiff = sortedByYDiff ? CIELABConvertor::Y_Diff(pixel, c2) : 1;
 		auto illusion = !diffuse && BlueNoise::TELL_BLUE_NOISE[(int)(error.yDiff * 4096) & 4095] > thresold;
 		auto yDiff = 1.0;
-		if (m_saliencies == nullptr && DITHER_MAX > 9)
+		if (!m_saliencies && !sortedByYDiff)
 			yDiff = CIELABConvertor::Y_Diff(pixel, c2);
 
 		int errLength = denoise ? error.length() - 1 : 0;
@@ -246,7 +246,7 @@ namespace Peano
 		margin = weight < .0025 ? 12 : 6;
 
 		nMaxColors = palette.cols * palette.rows;
-		sortedByYDiff = !hasAlpha && nMaxColors >= 128 && weight >= .04;
+		sortedByYDiff = !hasAlpha && m_saliencies && nMaxColors >= 128 && weight >= .04;
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
 		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge) : DITHER_MAX;
