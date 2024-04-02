@@ -54,13 +54,13 @@ bool dither_image(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn, co
 
 	bool noBias = (transparentPixelIndex >= 0 || hasSemiTransparency) || nMaxColors < 64;
 	int dir = 1;
-	for (uint i = 0; i < height; ++i) {
+	for (int i = 0; i < height; ++i) {
 		if (dir < 0)
 			pixelIndex += width - 1;
 
 		int cursor0 = DJ, cursor1 = width * DJ;
 		row1[cursor1] = row1[cursor1 + 1] = row1[cursor1 + 2] = row1[cursor1 + 3] = 0;
-		for (uint j = 0; j < width; ++j) {
+		for (int j = 0; j < width; ++j) {
 			int y = pixelIndex / width, x = pixelIndex % width;
 			auto& pixel = pixels4b(y, x);
 
@@ -167,7 +167,7 @@ bool dithering_image(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn,
 
 		int cursor0 = DJ, cursor1 = width * DJ;
 		row1[cursor1] = row1[cursor1 + 1] = row1[cursor1 + 2] = row1[cursor1 + 3] = 0;
-		for (uint j = 0; j < width; ++j) {
+		for (int j = 0; j < width; ++j) {
 			int y = pixelIndex / width, x = pixelIndex % width;
 			auto& pixel = pixels4b(y, x);
 

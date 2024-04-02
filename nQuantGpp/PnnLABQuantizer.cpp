@@ -1,6 +1,6 @@
 ﻿/* Fast pairwise nearest neighbor based algorithm for multilevel thresholding
 Copyright (C) 2004-2016 Mark Tyler and Dmitry Groshev
-Copyright (c) 2018-2021 Miller Cy Chan
+Copyright (c) 2018-2024 Miller Cy Chan
 * error measure; time used is proportional to number of bins squared - WJ */
 
 #include "stdafx.h"
@@ -146,10 +146,8 @@ namespace PnnLABQuant
 		auto saliencyBase = .1f;
 
 		/* Build histogram */
-		for (int y = 0; y < pixels.rows; ++y)
-		{
-			for (int x = 0; x < pixels.cols; ++x)
-			{
+		for (int y = 0; y < pixels.rows; ++y) {
+			for (int x = 0; x < pixels.cols; ++x) {
 				auto c = pixels(y, x);
 				if (c[3] <= alphaThreshold)
 					c = m_transparentColor;
@@ -335,7 +333,7 @@ namespace PnnLABQuant
 		}
 
 		/* Fill palette */
-		short k = 0;
+		ushort k = 0;
 		for (int i = 0;; ++k) {
 			CIELABConvertor::Lab lab1;
 			lab1.alpha = (hasSemiTransparency || m_transparentPixelIndex > -1) ? rint(bins[i].ac) : UCHAR_MAX;
@@ -603,8 +601,7 @@ namespace PnnLABQuant
 			else
 				palette.at<Vec3b>(1, 0) = Vec3b(UCHAR_MAX, UCHAR_MAX, UCHAR_MAX);
 		}
-
-		Mat1b qPixels(bitmapHeight, bitmapWidth);
+		
 		if (hasSemiTransparency)
 			weight *= -1;
 
@@ -621,20 +618,17 @@ namespace PnnLABQuant
 			return closestColorIndex(palette, c, pos);
 		};
 
-		Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight);
-
 		if (nMaxColors > 256) {
-			auto NearestColorIndex = [&](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
-				return nearestColorIndex(palette, c, pos);
-			};
-
 			Mat qPixels(bitmapHeight, bitmapWidth, palette.type());
-			dithering_image(pixels4b, palette, NearestColorIndex, hasSemiTransparency, m_transparentPixelIndex, nMaxColors, qPixels);
+			Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight);
 
 			pixelMap.clear();
 			clear();
 			return qPixels;
 		}
+
+		Mat1b qPixels(bitmapHeight, bitmapWidth);
+		Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight);
 
 		if (!dither) {
 			const auto delta = sqr(nMaxColors) / pixelMap.size();
@@ -643,7 +637,7 @@ namespace PnnLABQuant
 		}
 
 		if (m_transparentPixelIndex >= 0) {
-			auto k = qPixels(m_transparentPixelIndex / bitmapWidth, m_transparentPixelIndex % bitmapWidth);
+			auto k = qPixels.at<ushort>(m_transparentPixelIndex / bitmapWidth, m_transparentPixelIndex % bitmapWidth);
 			if (nMaxColors > 2)
 				palette.at<Vec4b>(k, 0) = m_transparentColor;
 			else if (GetArgb8888(palette.at<Vec4b>(k, 0)) != GetArgb8888(m_transparentColor))

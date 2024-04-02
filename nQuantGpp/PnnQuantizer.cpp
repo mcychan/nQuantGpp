@@ -1,6 +1,6 @@
 ﻿/* Fast pairwise nearest neighbor based algorithm for multilevel thresholding
 Copyright (C) 2004-2016 Mark Tyler and Dmitry Groshev
-Copyright (c) 2023 Miller Cy Chan
+Copyright (c) 2018-2024 Miller Cy Chan
 * error measure; time used is proportional to number of bins squared - WJ */
 
 #include "stdafx.h"
@@ -242,7 +242,7 @@ namespace PnnQuant
 		}
 
 		/* Fill palette */
-		short k = 0;
+		ushort k = 0;
 		for (int i = 0;; ++k) {
 			auto alpha = (hasSemiTransparency || m_transparentPixelIndex > -1) ? rint(bins[i].ac) : UCHAR_MAX;
 			Vec4b c1((uchar) bins[i].bc, (uchar) bins[i].gc, (uchar) bins[i].rc, alpha);
@@ -424,28 +424,29 @@ namespace PnnQuant
 				palette.at<Vec3b>(1, 0) = Vec3b(UCHAR_MAX, UCHAR_MAX, UCHAR_MAX);
 		}
 
-		Mat1b qPixels(bitmapHeight, bitmapWidth);
+		
 		DitherFn ditherFn = dither ? nearestColorIndex : closestColorIndex;
 		if (hasSemiTransparency)
 			weight *= -1;
 
 		vector<float> saliencies;
-		Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight);
-
 		if (nMaxColors > 256) {
 			Mat qPixels(bitmapHeight, bitmapWidth, srcImg.type());
-			dithering_image(pixels4b, palette, nearestColorIndex, hasSemiTransparency, m_transparentPixelIndex, nMaxColors, qPixels);
+			Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight);
 
 			closestMap.clear();
 			nearestMap.clear();
 			return qPixels;
 		}
 
+		Mat1b qPixels(bitmapHeight, bitmapWidth);
+		Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight);
+
 		if(!dither)
 			BlueNoise::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels);
 
 		if (m_transparentPixelIndex >= 0) {
-			auto k = qPixels(m_transparentPixelIndex / bitmapWidth, m_transparentPixelIndex % bitmapWidth);
+			auto k = qPixels.at<ushort>(m_transparentPixelIndex / bitmapWidth, m_transparentPixelIndex % bitmapWidth);
 			if (nMaxColors > 2)
 				palette.at<Vec4b>(k, 0) = m_transparentColor;
 			else if (GetArgb8888(palette.at<Vec4b>(k, 0)) != GetArgb8888(m_transparentColor))

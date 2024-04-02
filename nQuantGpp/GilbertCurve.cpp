@@ -1,5 +1,5 @@
 /* Generalized Hilbert ("gilbert") space-filling curve for rectangular domains of arbitrary (non-power of two) sizes.
-Copyright (c) 2023 Miller Cy Chan
+Copyright (c) 2023-2024 Miller Cy Chan
 * A general rectangle with a known orientation is split into three regions ("up", "right", "down"), for which the function calls itself recursively, until a trivial path can be produced. */
 
 #include "stdafx.h"
@@ -40,13 +40,13 @@ namespace Peano
 	uint m_width, m_height;
 	const Mat4b* m_pPixels4b;
 	const Mat* m_pPalette;
-	Mat1b* m_qPixels;
+	Mat* m_qPixels;
 	DitherFn m_ditherFn;
 	float* m_saliencies;
 	GetColorIndexFn m_getColorIndexFn;
 	list<ErrorBox> errorq;
 	vector<float> m_weights;
-	short* m_lookup;
+	ushort* m_lookup;
 	static uchar DITHER_MAX = 9, ditherMax;
 	static int margin, nMaxColors, thresold;
 	static const float BLOCK_SIZE = 343.0f;
@@ -119,7 +119,7 @@ namespace Peano
 		auto a_pix = static_cast<uchar>(min(UCHAR_MAX, (int) max(error[3], 0.0f)));
 
 		Vec4b c2(b_pix, g_pix, r_pix, a_pix);
-		auto& qPixelIndex = m_qPixels->at<uchar>(y, x);
+		ushort qPixelIndex = 0;
 		if (nMaxColors <= 32 && a_pix > 0xF0)
 		{
 			int offset = m_getColorIndexFn(c2);
@@ -144,6 +144,11 @@ namespace Peano
 			initWeights(errorq.size());
 
 		c2 = m_pPalette->at<Vec4b>(qPixelIndex, 0);
+		if (nMaxColors > 256)
+			SetPixel(*m_qPixels, y, x, c2);
+		else
+			m_qPixels->at<uchar>(y, x) = qPixelIndex;
+
 		error[0] = b_pix - c2[0];
 		error[1] = g_pix - c2[1];
 		error[2] = r_pix - c2[2];
@@ -231,7 +236,7 @@ namespace Peano
 		generate2d(x + (ax - dax) + (bx2 - dbx), y + (ay - day) + (by2 - dby), -bx2, -by2, -(ax - ax2), -(ay - ay2));
 	}
 
-	void GilbertCurve::dither(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn, GetColorIndexFn getColorIndexFn, Mat1b qPixels, float* saliencies, double weight)
+	void GilbertCurve::dither(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn, GetColorIndexFn getColorIndexFn, Mat qPixels, float* saliencies, double weight)
 	{
 		m_width = pixels4b.cols;
 		m_height = pixels4b.rows;
@@ -257,7 +262,7 @@ namespace Peano
 			ditherMax = (uchar)sqr(5 + edge);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		m_weights.clear();
-		auto pLookup = make_unique<short[]>(USHRT_MAX + 1);
+		auto pLookup = make_unique<ushort[]>(USHRT_MAX + 1);
 		m_lookup = pLookup.get();
 
 		if(!sortedByYDiff)
