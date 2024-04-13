@@ -691,20 +691,16 @@ namespace EdgeAwareSQuant
 		GrabPixels(srcImg, pixels4b, hasSemiTransparency, m_transparentPixelIndex, m_transparentColor, alphaThreshold, nMaxColors);
 		vector<Vec4b> pixels(pixels4b.begin(), pixels4b.end());
 
-		int pixelIndex = 0;
 		// see equation (7) in the paper
 		Mat1f saliencyMap(bitmapHeight, bitmapWidth, CV_32F);
-		vector<float> saliencies(pixels.size());
 		auto saliencyBase = 0.1f;
 		for (int y = 0; y < saliencyMap.rows; ++y) {
-			for (int x = 0; x < saliencyMap.cols; ++x, ++pixelIndex) {
+			for (int x = 0; x < saliencyMap.cols; ++x) {
 				auto& c = pixels4b(y, x);
 
 				CIELABConvertor::Lab lab1;
 				getLab(c, lab1);
 				saliencyMap(y, x) = saliencyBase + (1 - saliencyBase) * lab1.L / 100.0f;
-				if (lab1.alpha > alphaThreshold && nMaxColors < 32)
-					saliencies[pixelIndex] = saliencyMap(y, x);
 			}
 		}
 
@@ -768,7 +764,13 @@ namespace EdgeAwareSQuant
 		}
 
 		if (!dither && nMaxColors > 2) {
-			Peano::GilbertCurve::dither(pixels4b, pal, nearestColorIndex, GetColorIndex, qPixels, saliencies.data(), .25);
+			if (nMaxColors < 32) {
+				Mat flat = saliencyMap.reshape(1, saliencyMap.total() * saliencyMap.channels());
+				vector<float> saliencies = saliencyMap.isContinuous() ? flat : flat.clone();
+				Peano::GilbertCurve::dither(pixels4b, pal, nearestColorIndex, GetColorIndex, qPixels, saliencies.data(), .25);
+			}
+			else
+				Peano::GilbertCurve::dither(pixels4b, pal, nearestColorIndex, GetColorIndex, qPixels, nullptr, .25);
 			nearestMap.clear();
 		}
 
