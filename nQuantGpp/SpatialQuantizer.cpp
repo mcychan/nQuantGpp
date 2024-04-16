@@ -1068,7 +1068,22 @@ namespace SpatialQuant
 		}
 
 		if (!dither && nMaxColors > 2) {
-			Peano::GilbertCurve::dither(pixels4b, pal, nearestColorIndex, GetColorIndex, qPixels, nullptr);
+			const auto area = (size_t)(bitmapWidth * bitmapHeight);
+			vector<float> saliencies(area);
+			const auto saliencyBase = .1f;
+
+			int i = 0;
+			for (int y = 0; y < pixels4b.rows; ++y) {
+				for (int x = 0; x < pixels4b.cols; ++x, ++i) {
+					Vec4b pixel;
+					GrabPixel(pixel, pixels4b, y, x);
+					CIELABConvertor::Lab lab1;
+					getLab(pixel, lab1);
+					if (lab1.alpha > alphaThreshold)
+						saliencies[i] = saliencyBase + (1 - saliencyBase) * lab1.L / 100.0f;
+				}
+			}
+			Peano::GilbertCurve::dither(pixels4b, pal, nearestColorIndex, GetColorIndex, qPixels, saliencies.data());
 			nearestMap.clear();
 		}
 		pixelMap.clear();
