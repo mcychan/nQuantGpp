@@ -214,3 +214,14 @@ double CIELABConvertor::Y_Diff(const Vec4b& c1, const Vec4b& c2)
 	auto y2 = pixel2Y(c2);
 	return abs(y2 - y) * XYZ_WHITE_REFERENCE_Y;
 }
+
+double CIELABConvertor::U_Diff(const Vec4b& c1, const Vec4b& c2)
+{
+	auto pixel2U = [](const Vec4b& pixel) -> double {
+		return -0.09991 * pixel[2] - 0.33609 * pixel[1] + 0.436 * pixel[0];
+	};
+
+	auto u = pixel2U(c1);
+	auto u2 = pixel2U(c2);
+	return abs(u2 - u);
+}
