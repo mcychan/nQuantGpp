@@ -257,7 +257,7 @@ namespace Peano
 		int density = nMaxColors > 16 ? 3200 : 1500;
 		if (nMaxColors / weight > 5000 && (weight > .045 || (weight > .01 && nMaxColors <= 64)))
 			ditherMax = (uchar)sqr(5 + edge);
-		else if (nMaxColors / weight < density && nMaxColors >= 16 && nMaxColors < 256)
+		else if (DITHER_MAX > 9 && nMaxColors / weight < density && nMaxColors >= 16 && nMaxColors < 256)
 			ditherMax = (uchar)sqr(5 + edge);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		m_weights.clear();
