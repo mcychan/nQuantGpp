@@ -607,7 +607,7 @@ namespace PnnLABQuant
 				palette.at<Vec3b>(1, 0) = Vec3b(UCHAR_MAX, UCHAR_MAX, UCHAR_MAX);
 		}
 		
-		if (hasSemiTransparency)
+		if (hasSemiTransparency || isGA)
 			weight *= -1;
 
 		auto GetColorIndex = [&](const Vec4b& c) -> int {
