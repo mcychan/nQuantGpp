@@ -146,6 +146,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ApngWriter.h" />
     <ClInclude Include="bitmapUtilities.h" />
     <ClInclude Include="BlueNoise.h" />
     <ClInclude Include="CIELABConvertor.h" />
@@ -167,6 +168,7 @@
     <ClInclude Include="WuQuantizer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ApngWriter.cpp" />
     <ClCompile Include="bitmapUtilities.cpp" />
     <ClCompile Include="BlueNoise.cpp" />
     <ClCompile Include="CIELABConvertor.cpp" />

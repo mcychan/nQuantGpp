@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include "ApngWriter.h"
 #include <algorithm>
 #include <chrono>
 #include <clocale>
@@ -48,6 +49,7 @@ void PrintUsage()
 	tcout << "  /m : Max Colors (pixel-depth) - Maximum number of colors for the output format to support. The default is 256 (8-bit)." << endl;
 	tcout << "  /d : Dithering or not? y or n." << endl;
 	tcout << "  /o : Output image file dir. The default is <source image path directory>" << endl;
+	tcout << "  /f : Frame per second." << endl;
 }
 
 bool isdigit(const char* string) {
@@ -67,7 +69,7 @@ bool isAlgo(const string& alg) {
 	return false;
 }
 
-bool ProcessArgs(int argc, string& algo, uint& nMaxColors, bool& dither, string& targetPath, char** argv)
+bool ProcessArgs(int argc, string& algo, uint& nMaxColors, bool& dither, string& targetPath, int& fps, char** argv)
 {
 	for (int index = 1; index < argc; ++index) {
 		string currentArg(argv[index]);
@@ -113,6 +115,15 @@ bool ProcessArgs(int argc, string& algo, uint& nMaxColors, bool& dither, string&
 			else if (currentArg[1] == 'O') {
 				string tmpPath(argv[index + 1], argv[index + 1] + strlen(argv[index + 1]));
 				targetPath = tmpPath;
+			}
+			else if (currentArg[1] == 'F') {
+				if (!isdigit(argv[index + 1])) {
+					PrintUsage();
+					return false;
+				}
+				fps = atoi(argv[index + 1]);
+				if (fps > 30)
+					fps = 30;
 			}
 			else {
 				PrintUsage();
@@ -226,7 +237,7 @@ vector<uchar> QuantizeImage(const string& algorithm, const string& sourceFile, s
 	return bytes;
 }
 
-void OutputImages(const fs::path& sourceDir, string& targetDir, const uint& nMaxColors, const bool dither)
+void OutputImages(const fs::path& sourceDir, string& targetDir, const uint& nMaxColors, const bool dither, const int fps)
 {
 	auto start = chrono::steady_clock::now();
 
@@ -261,12 +272,36 @@ void OutputImages(const fs::path& sourceDir, string& targetDir, const uint& nMax
 	vector<vector<uchar> > bytesList;
 	auto imgList = pGAq->QuantizeImage(bytesList, dither);
 	if(!bytesList.empty()) {
-		int i = 0;		
-		for(auto& sourcePath : sourcePaths) {
-			int j = std::min(i, (int) imgList.size() - 1);
-			OutputImage(sourcePath, "PNNLAB+", nMaxColors, targetDir, bytesList[i], *imgList[j]);
-			++i;
+		int i = 0;
+		targetDir = fileExists(targetDir) ? fs::canonical(fs::path(targetDir)).string() : fs::current_path().string();
+		auto fileName = sourcePaths[0].filename().string();
+		fileName = fileName.substr(0, fileName.find_last_of('.'));
+		auto destPath = targetDir + "/" + fileName + "-";
+		string algo = "PNNLAB+";
+		destPath += algo + "quant";
+
+		auto targetExtension = ".png";
+		destPath += std::to_string(nMaxColors) + targetExtension;
+		
+		if (fps < 0) {
+			for (auto& sourcePath : sourcePaths) {
+				ostringstream ss;
+				ss << "\r" << i << " of " << bytesList.size() << " completed." << showpoint;
+				tcout << ss.str().c_str();
+
+				int j = std::min(i, (int)imgList.size() - 1);
+				OutputImage(sourcePath, "PNNLAB+", nMaxColors, targetDir, bytesList[i], *imgList[j]);
+				++i;
+			}
+			tcout << "\rWell done!!!                             " << endl;
 		}
+		else {
+			PngEncode::ApngWriter apng(pSources[0]->rows, pSources[0]->cols);
+			apng.AddImages(bytesList);
+			apng.Save(destPath);
+		}		
+
+		tcout << "Converted image: " << destPath << endl;
 	}
 
 	auto dur = chrono::duration_cast<chrono::microseconds>(chrono::steady_clock::now() - start).count() / 1000000.0;
@@ -291,11 +326,12 @@ int main(int argc, char** argv)
 	uint nMaxColors = 256;
 	string algo = "";
 	string targetDir = "";
+	int fps = -1;
 #ifdef _DEBUG
 	algo = "PNN";
 	string sourceFile = szDir + "/../sailing_2020.jpg";	
 #else
-	if (!ProcessArgs(argc, algo, nMaxColors, dither, targetDir, argv))
+	if (!ProcessArgs(argc, algo, nMaxColors, dither, targetDir, fps, argv))
 		return 0;
 
 	string sourceFile(argv[1], argv[1] + strlen(argv[1]));
@@ -311,7 +347,7 @@ int main(int argc, char** argv)
 	if(fs::is_directory(fs::status(sourceFile.c_str())) ) {
 		if (!targetDir.empty() && !fileExists(targetDir))
 			fs::create_directories(targetDir);
-		OutputImages(sourceFile, targetDir, nMaxColors, dither);
+		OutputImages(sourceFile, targetDir, nMaxColors, dither, fps);
 		return 0;
 	}
 
