@@ -381,8 +381,8 @@ namespace PngEncode
 				cout << ss.str().c_str();
 				
 				if (i > 0) {
-					auto width = to_uint32_big_endian(&pngList[i][idx + 4]);
-					auto height = to_uint32_big_endian(&pngList[i][idx + 8]);
+					auto width = to_uint32_big_endian(&pngList[i][idx + 8]);
+					auto height = to_uint32_big_endian(&pngList[i][idx + 12]);
 
 					// insert the fcTL chunk **after** last IDAT chunk
 					vector<uchar> fcTL_chunk_bytes;
@@ -415,8 +415,8 @@ namespace PngEncode
 					++seq;
 				}
 				else {
-					auto width = to_uint32_big_endian(&_data[idx + 4]);
-					auto height = to_uint32_big_endian(&_data[idx + 8]);
+					auto width = to_uint32_big_endian(&_data[idx + 8]);
+					auto height = to_uint32_big_endian(&_data[idx + 12]);
 
 					// insert the fcTL chunk **before** first IDAT chunk
 					vector<uchar> fcTL_chunk_bytes;
