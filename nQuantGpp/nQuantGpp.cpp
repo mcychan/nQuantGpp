@@ -296,7 +296,7 @@ void OutputImages(const fs::path& sourceDir, string& targetDir, const uint& nMax
 			tcout << "\rWell done!!!                             " << endl;
 		}
 		else {
-			PngEncode::ApngWriter apng(pSources[0]->rows, pSources[0]->cols);
+			PngEncode::ApngWriter apng;
 			apng.AddImages(bytesList);
 			apng.Save(destPath);
 		}		

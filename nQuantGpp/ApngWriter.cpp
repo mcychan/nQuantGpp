@@ -7,10 +7,8 @@
 
 namespace PngEncode
 {
-	ApngWriter::ApngWriter(const int width, const int height, const long fps, const bool loop)
+	ApngWriter::ApngWriter(const long fps, const bool loop)
 	{
-		_width = width;
-		_height = height;
 		_fps = fps;
 		_loop = loop;
 	}
@@ -383,9 +381,12 @@ namespace PngEncode
 				cout << ss.str().c_str();
 				
 				if (i > 0) {
+					auto width = to_uint32_big_endian(&pngList[i][idx + 4]);
+					auto height = to_uint32_big_endian(&pngList[i][idx + 8]);
+
 					// insert the fcTL chunk **after** last IDAT chunk
 					vector<uchar> fcTL_chunk_bytes;
-					create_fcTL_chunk(fcTL_chunk_bytes, seq++, _width, _height, _fps);
+					create_fcTL_chunk(fcTL_chunk_bytes, seq++, width, height, _fps);
 					auto fcTL_chunk_start_pos = _data.end() - 12;
 					_data.insert(fcTL_chunk_start_pos, fcTL_chunk_bytes.begin(), fcTL_chunk_bytes.end());
 
@@ -414,9 +415,12 @@ namespace PngEncode
 					++seq;
 				}
 				else {
+					auto width = to_uint32_big_endian(&_data[idx + 4]);
+					auto height = to_uint32_big_endian(&_data[idx + 8]);
+
 					// insert the fcTL chunk **before** first IDAT chunk
 					vector<uchar> fcTL_chunk_bytes;
-					create_fcTL_chunk(fcTL_chunk_bytes, seq++, _width, _height, _fps);
+					create_fcTL_chunk(fcTL_chunk_bytes, seq++, width, height, _fps);
 					auto fcTL_chunk_start_pos = _data.begin() + next_chunk_start_idx;
 					_data.insert(fcTL_chunk_start_pos, fcTL_chunk_bytes.begin(), fcTL_chunk_bytes.end());
 				}
