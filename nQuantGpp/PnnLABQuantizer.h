@@ -33,7 +33,6 @@ namespace PnnLABQuant
 			unordered_map<ARGB, vector<ushort> > closestMap;
 			unordered_map<ARGB, ushort> nearestMap;
 			vector<float> saliencies;
-			Mat m_palette;
 
 			struct pnnbin {
 				float ac = 0, Lc = 0, Ac = 0, Bc = 0, err = 0;
@@ -56,6 +55,7 @@ namespace PnnLABQuant
 			ushort nearestColorIndex(const Mat palette, const Vec4b& c0, const uint pos);
 			void setRatio(double ratioX, double ratioY);
 			void grabPixels(const Mat srcImg, Mat4b pixels, uint& nMaxColors, bool& hasSemiTransparency);
+			Mat QuantizeImageByPal(const Mat4b pixels, const Mat palette, vector<uchar>& bytes, uint& nMaxColors, bool dither = true);
 			Mat QuantizeImage(const Mat4b pixels, Mat palette, vector<uchar>& bytes, uint& nMaxColors, bool dither = true);
 			Mat QuantizeImage(const Mat srcImg, vector<uchar>& bytes, uint& nMaxColors, bool dither = true);
 	};
