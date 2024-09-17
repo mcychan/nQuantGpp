@@ -657,8 +657,7 @@ namespace PnnLABQuant
 				swap(palette.at<Vec4b>(0, 0), palette.at<Vec4b>(1, 0));
 		}
 
-		const auto& pal = palette;
-		return QuantizeImageByPal(pixels4b, pal, bytes, nMaxColors, dither);
+		return QuantizeImageByPal(pixels4b, palette, bytes, nMaxColors, dither);
 	}
 
 	Mat PnnLABQuantizer::QuantizeImage(const Mat srcImg, vector<uchar>& bytes, uint& nMaxColors, bool dither)

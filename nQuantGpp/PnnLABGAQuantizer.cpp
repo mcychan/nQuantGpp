@@ -163,11 +163,10 @@ namespace PnnLABQuant
 		auto palette = make_shared<Mat>(_nMaxColors, 1, _type, scalar);
 
 		m_pq->pnnquan(*m_pixelsList[0], *palette, _nMaxColors);
-		const auto& pal = *palette;
 		vector<shared_ptr<Mat> > imgList;
 		for(auto& pixels : m_pixelsList) {
 			vector<uchar> bytes;
-			auto pImg = make_shared<Mat>(m_pq->QuantizeImageByPal(*pixels, pal, bytes, _nMaxColors, dither));
+			auto pImg = make_shared<Mat>(m_pq->QuantizeImageByPal(*pixels, *palette, bytes, _nMaxColors, dither));
 			bytesList.emplace_back(bytes);
 			if(imgList.empty() || (pImg->rows * pImg->cols) > _nMaxColors)
 				imgList.emplace_back(pImg);
