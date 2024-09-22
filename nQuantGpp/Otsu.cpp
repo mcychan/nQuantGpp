@@ -380,13 +380,12 @@ namespace OtsuThreshold
 		auto pixelsGray = pixels4b.clone();
 		if (!isGrayscale)
 			ConvertToGrayScale(pixels4b, pixelsGray);
-		vector<Vec4b> pixels(pixels4b.begin(), pixels4b.end());
+		vector<Vec4b> pixels(pixelsGray.begin(), pixelsGray.end());
 
-		auto oldPixels = pixels4b.clone();
 		auto otsuThreshold = getOtsuThreshold(pixels);
 		auto lowerThreshold = 0.03, higherThreshold = 0.1;
 		pixels4b = cannyFilter(pixelsGray, lowerThreshold, higherThreshold);
-		threshold(oldPixels, pixels4b, otsuThreshold);
+		threshold(pixelsGray, pixels4b, otsuThreshold);
 
 		Mat palette(2, 1, srcImg.type(), scalar);
 		if (srcImg.channels() == 4)
