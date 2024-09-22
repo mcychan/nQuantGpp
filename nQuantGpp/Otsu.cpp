@@ -98,7 +98,7 @@ namespace OtsuThreshold
 			thresh = 200;
 		}
 
-		auto minThresh = (uchar)(thresh * weight);
+		auto minThresh = (uchar)(thresh * (m_transparentPixelIndex >= 0 ? .9f : weight));
 		for (uint y = 0; y < pixels.rows; ++y)
 		{
 			for (uint x = 0; x < pixels.cols; ++x)
@@ -106,9 +106,9 @@ namespace OtsuThreshold
 				auto& d = dest(y, x);
 				const auto& c = pixels(y, x);
 				
-				if (m_transparentPixelIndex >= 0 && c[2] + c[1] + c[0] > maxThresh * 3)
+				if (c[3] < alphaThreshold && c[2] + c[1] + c[0] > maxThresh * 3)
 					d = Vec4b(UCHAR_MAX, UCHAR_MAX, UCHAR_MAX, c[3]);
-				else if (m_transparentPixelIndex >= 0 || c[2] + c[1] + c[0] < minThresh * 3)
+				else if (c[2] + c[1] + c[0] < minThresh * 3)
 					d = Vec4b(0, 0, 0, c[3]);
 			}
 		}
