@@ -1,12 +1,14 @@
 ﻿/* Otsu's Image Segmentation Method
   Copyright (C) 2009 Tolga Birdal
-  Copyright (c) 2023 Miller Cy Chan
+  Copyright (c) 2023 - 2024 Miller Cy Chan
 */
 
 #include "stdafx.h"
 #include "Otsu.h"
 #include "bitmapUtilities.h"
 #include "GilbertCurve.h"
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <unordered_map>
 
 namespace OtsuThreshold
@@ -86,7 +88,7 @@ namespace OtsuThreshold
 		return findMax(vet, 256);
 	}
 	
-	void threshold(Mat4b pixels, short thresh, float weight = 1.0f)
+	void threshold(const Mat4b pixels, Mat4b dest, short thresh, float weight = 1.0f)
 	{
 		auto maxThresh = (uchar)thresh;
 		if (thresh >= 200)
@@ -101,13 +103,157 @@ namespace OtsuThreshold
 		{
 			for (uint x = 0; x < pixels.cols; ++x)
 			{
-				auto& c = pixels(y, x);
-				if (c[2] + c[1] + c[0] > maxThresh * 3)
-					c = Vec4b(UCHAR_MAX, UCHAR_MAX, UCHAR_MAX, c[3]);
+				auto& d = dest(y, x);
+				const auto& c = pixels(y, x);
+				
+				if (m_transparentPixelIndex >= 0 && c[2] + c[1] + c[0] > maxThresh * 3)
+					d = Vec4b(UCHAR_MAX, UCHAR_MAX, UCHAR_MAX, c[3]);
 				else if (m_transparentPixelIndex >= 0 || c[2] + c[1] + c[0] < minThresh * 3)
-					c = Vec4b(0, 0, 0, c[3]);
+					d = Vec4b(0, 0, 0, c[3]);
 			}
 		}
+	}
+
+	Mat cannyFilter(const Mat4b pixelsGray, double lowerThreshold, double higherThreshold) {
+		const auto width = pixelsGray.cols;
+		const auto height = pixelsGray.rows;
+		const auto area = (size_t)(width * height);
+		auto scalar = Scalar(UCHAR_MAX, UCHAR_MAX, UCHAR_MAX, UCHAR_MAX);
+
+		Mat4b pixelsCanny(height, width, scalar);
+
+		int gx[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+		int gy[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+		auto G = make_unique<double[]>(area);
+		vector<int> theta(area);
+		auto largestG = 0.0;
+
+		// perform canny edge detection on everything but the edges
+		for (int i = 1; i < height - 1; ++i) {
+			for (int j = 1; j < width - 1; ++j) {
+				// find gx and gy for each pixel
+				auto gxValue = 0.0;
+				auto gyValue = 0.0;
+				for (int x = -1; x <= 1; ++x) {
+					for (int y = -1; y <= 1; ++y) {
+						const auto& c = pixelsGray(i + x, j + y);
+						gxValue += gx[1 - x][1 - y] * c[0];
+						gyValue += gy[1 - x][1 - y] * c[0];
+					}
+				}
+
+				const int center = i * width + j;
+				// calculate G and theta
+				G[center] = sqrt(pow(gxValue, 2) + pow(gyValue, 2));
+				auto atanResult = atan2(gyValue, gxValue) * 180.0 / M_PI;
+				theta[center] = (int)(180.0 + atanResult);
+
+				if (G[center] > largestG)
+					largestG = G[center];
+
+				// setting the edges
+				if (i == 1) {
+					G[center - 1] = G[center];
+					theta[center - 1] = theta[center];
+				}
+				else if (j == 1) {
+					G[center - width] = G[center];
+					theta[center - width] = theta[center];
+				}
+				else if (i == height - 1) {
+					G[center + 1] = G[center];
+					theta[center + 1] = theta[center];
+				}
+				else if (j == width - 1) {
+					G[center + width] = G[center];
+					theta[center + width] = theta[center];
+				}
+
+				// setting the corners
+				if (i == 1 && j == 1) {
+					G[center - width - 1] = G[center];
+					theta[center - width - 1] = theta[center];
+				}
+				else if (i == 1 && j == width - 1) {
+					G[center - width + 1] = G[center];
+					theta[center - width + 1] = theta[center];
+				}
+				else if (i == height - 1 && j == 1) {
+					G[center + width - 1] = G[center];
+					theta[center + width - 1] = theta[center];
+				}
+				else if (i == height - 1 && j == width - 1) {
+					G[center + width + 1] = G[center];
+					theta[center + width + 1] = theta[center];
+				}
+
+				// to the nearest 45 degrees
+				theta[center] = rint(theta[center] / 45) * 45;
+			}
+		}
+
+		largestG *= .5;
+
+		// non-maximum suppression
+		for (int i = 1; i < height - 1; ++i) {
+			for (int j = 1; j < width - 1; ++j) {
+				auto& pixel = pixelsCanny(i, j);
+				const int center = i * width + j;
+				if (theta[center] == 0 || theta[center] == 180) {
+					if (G[center] < G[center - 1] || G[center] < G[center + 1])
+						G[center] = 0;
+				}
+				else if (theta[center] == 45 || theta[center] == 225) {
+					if (G[center] < G[center + width + 1] || G[center] < G[center - width - 1])
+						G[center] = 0;
+				}
+				else if (theta[center] == 90 || theta[center] == 270) {
+					if (G[center] < G[center + width] || G[center] < G[center - width])
+						G[center] = 0;
+				}
+				else {
+					if (G[center] < G[center + width - 1] || G[center] < G[center - width + 1])
+						G[center] = 0;
+				}
+
+				auto grey = (uchar)(G[center] * (255.0 / largestG));
+				pixel[0] = pixel[1] = pixel[2] = ~grey;
+			}
+		}
+
+		int k = 0;
+		auto minThreshold = lowerThreshold * largestG, maxThreshold = higherThreshold * largestG;
+		do {
+			for (int i = 1; i < height - 1; ++i) {
+				for (int j = 1; j < width - 1; ++j) {
+					auto& pixel = pixelsCanny(i, j);
+					const int center = i * width + j;
+					if (G[center] < minThreshold)
+						G[center] = 0;
+					else if (G[center] >= maxThreshold)
+						continue;
+					else if (G[center] < maxThreshold) {
+						G[center] = 0;
+						for (int x = -1; x <= 1; ++x) {
+							for (int y = -1; y <= 1; y++) {
+								if (x == 0 && y == 0)
+									continue;
+								if (G[center + x * width + y] >= maxThreshold) {
+									G[center] = higherThreshold * largestG;
+									k = 0;
+									x = 2;
+									break;
+								}
+							}
+						}
+					}
+					
+					auto grey = (uchar)(G[center] * 255.0 / largestG);
+					pixel[0] = pixel[1] = pixel[2] = ~grey;
+				}
+			}
+		} while (k++ < 100);
+		return pixelsCanny;
 	}
 	
 	inline auto GetColorIndex(const Vec4b& bgra)
@@ -192,7 +338,7 @@ namespace OtsuThreshold
 		for (uint y = 0; y < srcImg.rows; ++y)
 		{
 			for (uint x = 0; x < srcImg.cols; ++x)
-			{				
+			{
 				auto alfa = UCHAR_MAX;
 				Vec4b c0;
 				if(srcImg.channels() == 4) {
@@ -224,20 +370,23 @@ namespace OtsuThreshold
 
 	Mat Otsu::ConvertGrayScaleToBinary(const Mat srcImg, vector<uchar>& bytes, bool isGrayscale)
 	{		
-		auto bitmapWidth = srcImg.cols;
-		auto bitmapHeight = srcImg.rows;
+		auto width = srcImg.cols;
+		auto height = srcImg.rows;
 		auto scalar = srcImg.channels() == 4 ? Scalar(0, 0, 0, UCHAR_MAX) : Scalar(0, 0, 0);
 
-		Mat4b pixels4b(bitmapHeight, bitmapWidth, Scalar(0, 0, 0, UCHAR_MAX));
+		Mat4b pixels4b(height, width, Scalar(0, 0, 0, UCHAR_MAX));
 		GrabPixels(srcImg, pixels4b, hasSemiTransparency, m_transparentPixelIndex, m_transparentColor, alphaThreshold);
+
+		auto pixelsGray = pixels4b.clone();
+		if (!isGrayscale)
+			ConvertToGrayScale(pixels4b, pixelsGray);
 		vector<Vec4b> pixels(pixels4b.begin(), pixels4b.end());
 
-		Mat dest(bitmapHeight, bitmapWidth, srcImg.type(), scalar);
-		if (!isGrayscale)
-			ConvertToGrayScale(srcImg, dest);
-
+		auto oldPixels = pixels4b.clone();
 		auto otsuThreshold = getOtsuThreshold(pixels);
-		threshold(pixels4b, otsuThreshold);
+		auto lowerThreshold = 0.03, higherThreshold = 0.1;
+		pixels4b = cannyFilter(pixelsGray, lowerThreshold, higherThreshold);
+		threshold(oldPixels, pixels4b, otsuThreshold);
 
 		Mat palette(2, 1, srcImg.type(), scalar);
 		if (srcImg.channels() == 4)
@@ -245,11 +394,10 @@ namespace OtsuThreshold
 		else
 			palette.at<Vec3b>(1, 0) = Vec3b(UCHAR_MAX, UCHAR_MAX, UCHAR_MAX);
 
-		Mat1b qPixels(bitmapHeight, bitmapWidth, CV_8UC1);
+		Mat1b qPixels(height, width, CV_8UC1);
 		Peano::GilbertCurve::dither(pixels4b, palette, nearestColorIndex, GetColorIndex, qPixels, nullptr, 1.0f);
-		if (m_transparentPixelIndex >= 0)
-		{
-			auto k = qPixels(m_transparentPixelIndex / bitmapWidth, m_transparentPixelIndex % bitmapWidth);
+		if (m_transparentPixelIndex >= 0) {
+			auto k = qPixels(m_transparentPixelIndex / width, m_transparentPixelIndex % width);
 			if (GetArgb8888(palette.at<Vec4b>(k, 0)) != GetArgb8888(m_transparentColor))
 				swap(palette.at<Vec4b>(0, 0), palette.at<Vec4b>(1, 0));
 		}
