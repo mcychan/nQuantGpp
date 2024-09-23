@@ -99,6 +99,7 @@ namespace OtsuThreshold
 		}
 
 		auto minThresh = (uchar)(thresh * (m_transparentPixelIndex >= 0 ? .9f : weight));
+		const auto shadow = m_transparentPixelIndex >= 0 ? 3.5 : 3;
 		for (uint y = 0; y < pixels.rows; ++y)
 		{
 			for (uint x = 0; x < pixels.cols; ++x)
@@ -108,7 +109,7 @@ namespace OtsuThreshold
 				
 				if (c[3] < alphaThreshold && c[2] + c[1] + c[0] > maxThresh * 3)
 					d = Vec4b(UCHAR_MAX, UCHAR_MAX, UCHAR_MAX, c[3]);
-				else if (c[2] + c[1] + c[0] < minThresh * 3)
+				else if (c[2] + c[1] + c[0] < minThresh * shadow)
 					d = Vec4b(0, 0, 0, c[3]);
 			}
 		}
