@@ -227,6 +227,11 @@ bool dithering_image(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn,
 }
 
 
+void ProcessImagePixels(vector<uchar>& bytes, const Mat qPixels, const bool& hasTransparent)
+{
+	PngEncode::AddImage(bytes, qPixels, hasTransparent);
+}
+
 void ProcessImagePixels(vector<uchar>& bytes, const Mat palette, const Mat1b qPixels, const bool& hasTransparent)
 {
 	PngEncode::AddImage(bytes, palette, qPixels, hasTransparent);

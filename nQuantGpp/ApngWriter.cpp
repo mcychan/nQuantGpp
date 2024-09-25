@@ -298,6 +298,13 @@ namespace PngEncode
 		return result;
 	}
 
+	void AddImage(vector<uchar>& bytes, const Mat qPixels, const bool& hasTransparent)
+	{
+		imencode(".png", qPixels, bytes,
+			// use higher compression, thus smaller
+			{ IMWRITE_PNG_COMPRESSION, 9});
+	}
+
 	void AddImage(vector<uchar>& bytes, const Mat palette, const Mat1b qPixels, const bool& hasTransparent)
 	{
 		CV_Assert(qPixels.type() == CV_8UC1);
@@ -360,10 +367,13 @@ namespace PngEncode
 
 	bool ApngWriter::AddImages(vector<vector<uchar> >& pngList)
 	{
-		if (pngList.size() < 2)
+		if (pngList.size() < 1)
 			return false;
 
 		_data = pngList[0];
+		if (pngList.size() < 2)
+			return false;
+
 		int idx = png_iterator_first_chunk(_data);
 		auto next_chunk_range = SeekChunk(_data, "IHDR", idx);
 		int next_chunk_start_idx = next_chunk_range.second;

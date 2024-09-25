@@ -15,6 +15,8 @@ bool dither_image(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn, co
 
 bool dithering_image(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn, const bool& hasSemiTransparency, const int& transparentPixelIndex, const uint nMaxColors, Mat qPixels);
 
+void ProcessImagePixels(vector<uchar>& bytes, const Mat qPixels, const bool& hasTransparent);
+
 void ProcessImagePixels(vector<uchar>& bytes, const Mat palette, const Mat1b qPixels, const bool& hasTransparent);
 
 void SetPixel(Mat pixels, int row, int col, Vec4b& pixel);

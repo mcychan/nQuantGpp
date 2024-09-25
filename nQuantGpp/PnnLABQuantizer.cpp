@@ -612,6 +612,7 @@ namespace PnnLABQuant
 
 			pixelMap.clear();
 			clear();
+			ProcessImagePixels(bytes, qPixels, hasAlpha());
 			return qPixels;
 		}
 
