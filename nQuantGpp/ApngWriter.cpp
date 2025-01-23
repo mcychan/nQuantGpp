@@ -47,7 +47,7 @@ namespace PngEncode
 		is the 1's complement of the final running CRC (see the
 		crc() routine below)). */
 
-	static unsigned long update_crc(unsigned long crc, unsigned char *buf, int len) {
+	static unsigned long update_crc(unsigned long crc, unsigned char* buf, int len) {
 		unsigned long c = crc;
 		int n;
 
@@ -64,11 +64,11 @@ namespace PngEncode
 		return update_crc(0xffffffffL, buf, len) ^ 0xffffffffL;
 	}
 
-	static const uchar PNG_SIGNATURE[] = {137, 80, 78, 71, 13, 10, 26, 10};
+	static const uchar PNG_SIGNATURE[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
 
 	// NOTE png needs big endian https://stackoverflow.com/questions/2384111/png-file-format-endianness
 	static uint32_t to_uint32_big_endian(const uchar* a) {
-		return a[3] + (((uint32_t) a[2]) << 8) + (((uint32_t) a[1]) << 16) + (((uint32_t) a[0]) << 24);
+		return a[3] + (((uint32_t)a[2]) << 8) + (((uint32_t)a[1]) << 16) + (((uint32_t)a[0]) << 24);
 	}
 
 	static void from_uint16_big_endian(uchar* a, uint16_t n) {
@@ -76,7 +76,7 @@ namespace PngEncode
 		a[1] = n & 0xFF;
 	}
 
-	static void from_uint32_big_endian(uchar *a, uint32_t n) {
+	static void from_uint32_big_endian(uchar* a, uint32_t n) {
 		a[0] = (n >> 24) & 0xFF;
 		a[1] = (n >> 16) & 0xFF;
 		a[2] = (n >> 8) & 0xFF;
@@ -99,7 +99,7 @@ namespace PngEncode
 
 		string type(bytes.begin() + idx, bytes.begin() + idx + 4);
 		chunk_type = type;
-		return chunk_begin_loc + (int) length + 12;
+		return chunk_begin_loc + (int)length + 12;
 	}
 
 	static void create_acTL_chunk(vector<uchar>& bytes, const int frameSize, const int loop) {
@@ -120,8 +120,8 @@ namespace PngEncode
 
 		from_uint32_big_endian(&bytes[idx], min(0, loop));
 		idx += 4;
-		
-		auto crc_val = crc(&bytes[4], (int) length + 4);
+
+		auto crc_val = crc(&bytes[4], (int)length + 4);
 		from_uint32_big_endian(&bytes[idx], crc_val);
 		idx += 4;
 
@@ -161,8 +161,8 @@ namespace PngEncode
 
 		bytes[idx++] = 0;
 		bytes[idx++] = 0;
-		
-		auto crc_val = crc(&bytes[4], (int) length + 4);
+
+		auto crc_val = crc(&bytes[4], (int)length + 4);
 		from_uint32_big_endian(&bytes[idx], crc_val);
 		idx += 4;
 
@@ -175,7 +175,7 @@ namespace PngEncode
 
 		// *3: since 3 bytes per channel (color image)
 		uint32_t length = palette.rows * 3;
-		if(palette.channels() < 4)
+		if (palette.channels() < 4)
 			CV_Assert(palette.type() == CV_8UC3);
 		else
 			CV_Assert(palette.type() == CV_8UC4);
@@ -196,7 +196,7 @@ namespace PngEncode
 		// I know not that fast, but palette is pretty small so readability is also important
 		for (int j = 0; j < palette.rows; ++j) {
 			for (int ch = 0; ch < 3; ++ch) {
-				if(palette.channels() < 4)
+				if (palette.channels() < 4)
 					bytes[idx + ch] = palette.at<Vec3b>(j, 0)[2 - ch];
 				else
 					bytes[idx + ch] = palette.at<Vec4b>(j, 0)[2 - ch];
@@ -204,7 +204,7 @@ namespace PngEncode
 			idx += 3;
 		}
 
-		auto crc_val = crc(&bytes[4], (int) length + 4);
+		auto crc_val = crc(&bytes[4], (int)length + 4);
 		from_uint32_big_endian(&bytes[idx], crc_val);
 		idx += 4;
 
@@ -212,9 +212,9 @@ namespace PngEncode
 	}
 
 	static bool create_tRNS_chunk(vector<uchar>& bytes, const Mat palette) {
-		if(palette.channels() < 4)
+		if (palette.channels() < 4)
 			return false;
-		
+
 		CV_Assert(palette.cols == 1);
 		CV_Assert(palette.rows <= 256); // since only 8-bit depth!
 
@@ -237,7 +237,7 @@ namespace PngEncode
 		for (int j = 0; j < palette.rows; ++j)
 			bytes[idx++] = palette.at<Vec4b>(j, 0)[3];
 
-		auto crc_val = crc(&bytes[4], (int) length + 4);
+		auto crc_val = crc(&bytes[4], (int)length + 4);
 		from_uint32_big_endian(&bytes[idx], crc_val);
 		idx += 4;
 
@@ -245,7 +245,7 @@ namespace PngEncode
 		return true;
 	}
 
-	static void change_IHDR_colortype_and_crc(vector<uchar>& bytes, int ihdr_start_loc, int ihdr_end_loc, const int nMaxColors) {
+	static void change_IHDR_colortype_and_crc(vector<uchar>& bytes, int ihdr_start_loc, int ihdr_end_loc, const int nMaxColors, const int width) {
 		const int ihdr_data_loc = ihdr_start_loc + 4 + 4;
 		const int ihdr_bitdepth_loc = ihdr_data_loc + 8;
 		const int ihdr_colortype_loc = ihdr_data_loc + 9;
@@ -253,6 +253,10 @@ namespace PngEncode
 
 		if (nMaxColors < 3)
 			CV_Assert(bytes[ihdr_bitdepth_loc] == 1);
+		else if (nMaxColors < 17) {
+			bytes[ihdr_bitdepth_loc] = 4;
+			from_uint32_big_endian(&bytes[ihdr_data_loc], width);
+		}
 		else
 			CV_Assert(bytes[ihdr_bitdepth_loc] == 8);
 
@@ -273,7 +277,7 @@ namespace PngEncode
 			int next_chunk_end_idx = png_iterator_next_chunk(bytes, next_chunk_start_idx, chunk_type);
 			if (next_chunk_end_idx >= bytes.size())
 				return { idx, idx };
-			
+
 			if (chunk_type == chunkType)
 				return { next_chunk_start_idx, next_chunk_end_idx };
 			next_chunk_start_idx = next_chunk_end_idx;
@@ -298,31 +302,53 @@ namespace PngEncode
 		return result;
 	}
 
+	static Mat1b convert_8bit_to_4bit(const Mat1b qPixels)
+	{
+		Mat1b q4bitPixels(qPixels.rows, (int)ceil(qPixels.cols / 2.0));
+		for (int y = 0; y < qPixels.rows; ++y) {
+			for (int x = 0; x < qPixels.cols; ++x) {
+				auto index = qPixels(y, x);
+				// First pixel is the high nibble. From and To indices are 0..16
+				auto& nibbles = q4bitPixels(y, x / 2);
+				if ((x & 1) == 0) {
+					nibbles &= 0x0F;
+					nibbles |= (uchar)(index << 4);
+				}
+				else {
+					nibbles &= 0xF0;
+					nibbles |= index;
+				}
+			}
+		}
+		return q4bitPixels;
+	}
+
 	void AddImage(vector<uchar>& bytes, const Mat qPixels, const bool& hasTransparent)
 	{
 		imencode(".png", qPixels, bytes,
 			// use higher compression, thus smaller
-			{ IMWRITE_PNG_COMPRESSION, 9});
+			{ IMWRITE_PNG_COMPRESSION, 9 });
 	}
 
 	void AddImage(vector<uchar>& bytes, const Mat palette, const Mat1b qPixels, const bool& hasTransparent)
 	{
 		CV_Assert(qPixels.type() == CV_8UC1);
 		CV_Assert(palette.cols == 1);
-		if(hasTransparent)
+		if (hasTransparent)
 			CV_Assert(palette.type() == CV_8UC4);
 		else
 			CV_Assert(palette.type() == CV_8UC3);
 
-		imencode(".png", qPixels, bytes,
+		bool is4Bit = palette.rows > 2 && palette.rows < 17;
+		imencode(".png", is4Bit ? convert_8bit_to_4bit(qPixels) : qPixels, bytes,
 			// use higher compression, thus smaller
-			 {IMWRITE_PNG_COMPRESSION, 9, IMWRITE_PNG_BILEVEL, palette.rows < 3});
+			{ IMWRITE_PNG_COMPRESSION, 9, IMWRITE_PNG_BILEVEL, palette.rows < 3 });
 
 		int idx = png_iterator_first_chunk(bytes);
 		int next_chunk_start_idx = SeekChunk(bytes, "IHDR", idx).second;
 		if (next_chunk_start_idx < bytes.size()) {
 			// change 1: change IHDR "color" flag
-			change_IHDR_colortype_and_crc(bytes, idx, next_chunk_start_idx, palette.rows);
+			change_IHDR_colortype_and_crc(bytes, idx, next_chunk_start_idx, palette.rows, qPixels.cols);
 
 			// change 2: insert the PLTE chunk **after** IHDR chunk
 			vector<uchar> plte_chunk_bytes;
@@ -383,13 +409,13 @@ namespace PngEncode
 			create_acTL_chunk(acTL_chunk_bytes, pngList.size(), _loop ? 0 : 1);
 			_data.insert(_data.begin() + next_chunk_start_idx, acTL_chunk_bytes.begin(), acTL_chunk_bytes.end());
 			next_chunk_start_idx = SeekChunk(_data, "IDAT", next_chunk_start_idx).first;
-			
+
 			uint32_t seq = 0;
-			for(int i = 0; i < pngList.size(); ++i) {
+			for (int i = 0; i < pngList.size(); ++i) {
 				ostringstream ss;
 				ss << "\r" << i << " of " << pngList.size() << " completed." << showpoint;
 				cout << ss.str().c_str();
-				
+
 				if (i > 0) {
 					auto width = to_uint32_big_endian(&pngList[i][idx + 8]);
 					auto height = to_uint32_big_endian(&pngList[i][idx + 12]);

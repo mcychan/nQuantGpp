@@ -1,5 +1,5 @@
 /* Generalized Hilbert ("gilbert") space-filling curve for rectangular domains of arbitrary (non-power of two) sizes.
-Copyright (c) 2023-2024 Miller Cy Chan
+Copyright (c) 2023-2025 Miller Cy Chan
 * A general rectangle with a known orientation is split into three regions ("up", "right", "down"), for which the function calls itself recursively, until a trivial path can be produced. */
 
 #include "stdafx.h"
@@ -118,7 +118,18 @@ namespace Peano
 
 		Vec4b c2(b_pix, g_pix, r_pix, a_pix);
 		ushort qPixelIndex = 0;
-		if (nMaxColors <= 32 && a_pix > 0xF0)
+		if (m_saliencies != nullptr && nMaxColors < 3)
+		{
+			int acceptedDiff = 1;
+			if (CIELABConvertor::Y_Diff(pixel, c2) > acceptedDiff) {
+				Vec4b qPixel;
+				GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
+				auto strength = 1 / 3.0f;
+				c2 = BlueNoise::diffuse(pixel, qPixel, 1.0f / m_saliencies[bidx], strength, x, y);
+			}
+			qPixelIndex = m_ditherFn(*m_pPalette, c2, bidx);
+		}
+		else if (nMaxColors <= 32 && a_pix > 0xF0)
 		{
 			int offset = m_getColorIndexFn(c2);
 			if (!m_lookup[offset])
