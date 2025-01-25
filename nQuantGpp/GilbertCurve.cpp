@@ -123,7 +123,7 @@ namespace Peano
 			Vec4b qPixel;
 			GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
 			auto strength = 1 / 3.0f;
-			c2 = BlueNoise::diffuse(pixel, qPixel, strength / m_saliencies[bidx], strength, x, y);
+			c2 = BlueNoise::diffuse(pixel, qPixel, .5f / m_saliencies[bidx], strength, x, y);
 			qPixelIndex = m_ditherFn(*m_pPalette, c2, bidx);
 		}
 		else if (nMaxColors <= 32 && a_pix > 0xF0)
