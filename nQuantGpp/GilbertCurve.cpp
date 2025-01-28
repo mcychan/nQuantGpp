@@ -129,7 +129,11 @@ namespace Peano
 				c2 = BlueNoise::diffuse(pixel, qPixel, beta / m_saliencies[bidx], strength, x, y);
 			else if (nMaxColors <= 8 || CIELABConvertor::Y_Diff(pixel, c2) < (2 * acceptedDiff))
 				c2 = BlueNoise::diffuse(pixel, qPixel, beta * .5f / m_saliencies[bidx], strength, x, y);
-			qPixelIndex = m_ditherFn(*m_pPalette, c2, bidx);
+			
+			int offset = m_getColorIndexFn(c2);
+			if (!m_lookup[offset])
+				m_lookup[offset] = m_ditherFn(*m_pPalette, c2, bidx) + 1;
+			qPixelIndex = m_lookup[offset] - 1;
 		}
 		else if (nMaxColors <= 32 && a_pix > 0xF0)
 		{
