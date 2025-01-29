@@ -133,7 +133,7 @@ namespace Peano
 			if (nMaxColors > 8 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > (2 * acceptedDiff))) {
 				auto kappa = m_saliencies[bidx] < .5f ? beta * .5f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
-				c2 = BlueNoise::diffuse(c1, m_pPalette[qPixelIndex], kappa, strength, x, y);
+				c2 = BlueNoise::diffuse(c1, qPixel, kappa, strength, x, y);
 			}
 
 			int offset = m_getColorIndexFn(c2);
@@ -271,7 +271,7 @@ namespace Peano
 		auto hasAlpha = weight < 0;
 		sortedByYDiff = !hasAlpha && m_saliencies && nMaxColors >= 128 && weight >= .052;
 		weight = abs(weight);
-		margin = weight < .0025 ? 12 : 6;
+		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		nMaxColors = palette.cols * palette.rows;
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
