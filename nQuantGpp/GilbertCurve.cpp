@@ -125,13 +125,13 @@ namespace Peano
 			auto strength = 1 / 3.0f;
 			auto beta = nMaxColors > 8 ? .7f : 1;
 			int acceptedDiff = max(2, nMaxColors - margin);
-			if (m_saliencies[bidx] > .2f && m_saliencies[bidx] < .25f)
+			if (nMaxColors <= 8 && m_saliencies[bidx] > .2f && m_saliencies[bidx] < .25f)
 				c2 = BlueNoise::diffuse(pixel, qPixel, beta / m_saliencies[bidx], strength, x, y);
 			else if (nMaxColors <= 8 || CIELABConvertor::Y_Diff(pixel, c2) < (2 * acceptedDiff))
 				c2 = BlueNoise::diffuse(pixel, qPixel, beta * .5f / m_saliencies[bidx], strength, x, y);
 			
 			if (nMaxColors > 8 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > (2 * acceptedDiff))) {
-				auto kappa = m_saliencies[bidx] < .5f ? beta * .5f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
+				auto kappa = m_saliencies[bidx] < .25f ? beta * .4f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
 				c2 = BlueNoise::diffuse(c1, qPixel, kappa, strength, x, y);
 			}
