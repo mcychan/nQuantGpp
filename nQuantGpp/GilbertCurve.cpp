@@ -118,7 +118,7 @@ namespace Peano
 
 		Vec4b c2(b_pix, g_pix, r_pix, a_pix);
 		ushort qPixelIndex = 0;
-		if (m_saliencies != nullptr && (nMaxColors < 3 || margin > 6))
+		if (m_saliencies != nullptr)
 		{
 			Vec4b qPixel;
 			GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
@@ -130,10 +130,16 @@ namespace Peano
 			else if (nMaxColors <= 8 || CIELABConvertor::Y_Diff(pixel, c2) < (2 * acceptedDiff))
 				c2 = BlueNoise::diffuse(pixel, qPixel, beta * .5f / m_saliencies[bidx], strength, x, y);
 			
-			if (nMaxColors > 8 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > (2 * acceptedDiff))) {
-				auto kappa = m_saliencies[bidx] < .25f ? beta * .4f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
+			if (nMaxColors < 3 || margin > 6) {
+				if (nMaxColors > 8 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > (2 * acceptedDiff))) {
+					auto kappa = m_saliencies[bidx] < .25f ? beta * .4f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
+					Vec4b c1(b_pix, g_pix, r_pix, a_pix);
+					c2 = BlueNoise::diffuse(c1, qPixel, kappa, strength, x, y);
+				}
+			}
+			else if (nMaxColors > 8 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > acceptedDiff)) {
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
-				c2 = BlueNoise::diffuse(c1, qPixel, kappa, strength, x, y);
+				c2 = c1;
 			}
 
 			int offset = m_getColorIndexFn(c2);
