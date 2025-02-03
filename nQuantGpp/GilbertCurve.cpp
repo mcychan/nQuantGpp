@@ -118,7 +118,7 @@ namespace Peano
 
 		Vec4b c2(b_pix, g_pix, r_pix, a_pix);
 		ushort qPixelIndex = 0;
-		if (m_saliencies != nullptr)
+		if (m_saliencies != nullptr && !sortedByYDiff)
 		{
 			Vec4b qPixel;
 			GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
