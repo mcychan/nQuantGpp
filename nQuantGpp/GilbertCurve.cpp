@@ -38,6 +38,7 @@ namespace Peano
 
 	bool sortedByYDiff;
 	uint m_width, m_height;
+	float beta;
 	const Mat4b* m_pPixels4b;
 	const Mat* m_pPalette;
 	Mat* m_qPixels;
@@ -123,7 +124,6 @@ namespace Peano
 			Vec4b qPixel;
 			GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
 			auto strength = 1 / 3.0f;
-			auto beta = nMaxColors > 8 ? nMaxColors > 24 ? .25f : .7f : 1;
 			int acceptedDiff = max(2, nMaxColors - margin);
 			if (nMaxColors <= 8 && m_saliencies[bidx] > .2f && m_saliencies[bidx] < .25f)
 				c2 = BlueNoise::diffuse(pixel, qPixel, beta / m_saliencies[bidx], strength, x, y);
@@ -279,6 +279,7 @@ namespace Peano
 		weight = abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		nMaxColors = palette.cols * palette.rows;
+		beta = nMaxColors > 8 ? nMaxColors > 24 ? .25f : .7f : 1;
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
 		auto deviation = weight > .002 ? .25 : 1;
