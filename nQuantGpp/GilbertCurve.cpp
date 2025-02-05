@@ -138,8 +138,12 @@ namespace Peano
 				}
 			}
 			else if (nMaxColors > 8 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > acceptedDiff)) {
-				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
-				c2 = c1;
+				if (beta < .3f)
+					c2 = BlueNoise::diffuse(c2, qPixel, beta * .4f * m_saliencies[bidx], strength, x, y);
+				else {
+					Vec4b c1(b_pix, g_pix, r_pix, a_pix);
+					c2 = c1;
+				}
 			}
 
 			int offset = m_getColorIndexFn(c2);
@@ -280,6 +284,8 @@ namespace Peano
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		nMaxColors = palette.cols * palette.rows;
 		beta = nMaxColors > 8 ? nMaxColors > 24 ? .25f : .7f : 1;
+		if (weight > .02)
+			beta *= .5f;
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
 		auto deviation = weight > .002 ? .25 : 1;
