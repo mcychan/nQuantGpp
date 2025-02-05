@@ -138,7 +138,7 @@ namespace Peano
 				}
 			}
 			else if (nMaxColors > 8 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > acceptedDiff)) {
-				if (beta < .3f)
+				if (beta < .3f && (nMaxColors <= 32 || m_saliencies[bidx] < beta))
 					c2 = BlueNoise::diffuse(c2, qPixel, beta * .4f * m_saliencies[bidx], strength, x, y);
 				else {
 					Vec4b c1(b_pix, g_pix, r_pix, a_pix);
