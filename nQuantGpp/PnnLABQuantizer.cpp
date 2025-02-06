@@ -590,7 +590,7 @@ namespace PnnLABQuant
 		if (hasSemiTransparency || isGA)
 			weight *= -1;
 
-		if(dither && saliencies.empty() && weight < .052) {
+		if(dither && !hasSemiTransparency && saliencies.empty() && weight < .052) {
 			auto length = (size_t) pixels4b.rows * pixels4b.cols;
 			saliencies.resize(length);
 			auto saliencyBase = .1f;
