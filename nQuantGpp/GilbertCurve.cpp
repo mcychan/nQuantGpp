@@ -284,8 +284,8 @@ namespace Peano
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		nMaxColors = palette.cols * palette.rows;
 		beta = nMaxColors > 8 ? nMaxColors > 24 ? .25f : .7f : 1;
-		if (weight > .02)
-			beta *= .5f;
+		if (nMaxColors > 64 || weight > .02)
+			beta *= .4f;
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
 		auto deviation = weight > .002 ? .25 : 1;
