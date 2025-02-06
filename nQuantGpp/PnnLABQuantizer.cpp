@@ -590,6 +590,23 @@ namespace PnnLABQuant
 		if (hasSemiTransparency || isGA)
 			weight *= -1;
 
+		if(dither && saliencies == nullptr && weight < .052) {
+			auto length = (size_t) pixels4b.rows * pixels4b.cols;
+			saliencies.resize(length);
+			auto saliencyBase = .1f;
+
+			for (int y = 0; y < pixels4b.rows; ++y) {
+				for (int x = 0; x < pixels4b.cols; ++x) {
+					auto c = pixels4b(y, x);
+
+					CIELABConvertor::Lab lab1;
+					GetLab(c, lab1);
+					int i = x + y * pixels4b.cols;
+					saliencies[i] = saliencyBase + (1 - saliencyBase) * lab1.L / 100.0f;
+				}
+			}
+		}
+
 		auto GetColorIndex = [&](const Vec4b& c) -> int {
 			return GetArgbIndex(c, hasSemiTransparency, hasAlpha());
 		};
@@ -645,24 +662,8 @@ namespace PnnLABQuant
 		else {
 			if (m_transparentPixelIndex >= 0)
 				palette.at<Vec4b>(0, 0) = m_transparentColor;
-			else {
+			else
 				palette.at<Vec3b>(1, 0) = Vec3b(UCHAR_MAX, UCHAR_MAX, UCHAR_MAX);
-				
-				auto length = (size_t) pixels4b.rows * pixels4b.cols;
-				saliencies.resize(length);
-				auto saliencyBase = .1f;
-
-				for (int y = 0; y < pixels4b.rows; ++y) {
-					for (int x = 0; x < pixels4b.cols; ++x) {
-						auto c = pixels4b(y, x);
-
-						CIELABConvertor::Lab lab1;
-						GetLab(c, lab1);
-						int i = x + y * pixels4b.cols;
-						saliencies[i] = saliencyBase + (1 - saliencyBase) * lab1.L / 100.0f;
-					}
-				}
-			}
 		}
 
 		if (m_transparentPixelIndex >= 0) {
