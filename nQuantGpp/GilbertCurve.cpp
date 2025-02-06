@@ -279,16 +279,16 @@ namespace Peano
 		m_saliencies = saliencies;
 		m_getColorIndexFn = getColorIndexFn;
 		auto hasAlpha = weight < 0;
-		sortedByYDiff = !hasAlpha && m_saliencies && nMaxColors >= 128 && weight >= .052;
 		weight = abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
+		sortedByYDiff = !hasAlpha && m_saliencies && nMaxColors >= 128 && weight >= .052;
 		nMaxColors = palette.cols * palette.rows;
 		beta = nMaxColors > 8 ? nMaxColors > 24 ? .25f : .7f : 1;
 		if (nMaxColors > 64 || weight > .02)
 			beta *= .4f;
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
-		auto deviation = weight > .002 ? .25 : 1;
+		auto deviation = !hasAlpha && weight > .002 ? .25 : 1;
 		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : DITHER_MAX;
 		int density = nMaxColors > 16 ? 3200 : 1500;
 		if (nMaxColors / weight > 5000 && (weight > .045 || (weight > .01 && nMaxColors <= 64)))
