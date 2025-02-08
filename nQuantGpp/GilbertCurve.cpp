@@ -276,14 +276,15 @@ namespace Peano
 		m_pPalette = &palette;
 		m_qPixels = &qPixels;
 		m_ditherFn = ditherFn;
-		m_saliencies = saliencies;
-		m_getColorIndexFn = getColorIndexFn;
 		auto hasAlpha = weight < 0;
+		m_saliencies = hasAlpha ? nullptr : saliencies;
+		m_getColorIndexFn = getColorIndexFn;
+		
 		weight = abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		sortedByYDiff = !hasAlpha && m_saliencies && nMaxColors >= 128 && weight >= .052;
 		nMaxColors = palette.cols * palette.rows;
-		beta = nMaxColors > 8 ? nMaxColors > 24 ? .25f : .7f : 1;
+		beta = nMaxColors > 8 ? max(.25f, 1 - .021875f * nMaxColors) : 1;
 		if (nMaxColors > 64 || weight > .02)
 			beta *= .4f;
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
