@@ -284,7 +284,7 @@ namespace Peano
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		sortedByYDiff = !hasAlpha && m_saliencies && nMaxColors >= 128 && weight >= .052;
 		nMaxColors = palette.cols * palette.rows;
-		beta = nMaxColors > 8 ? max(.25f, 1 - .021875f * nMaxColors) : 1;
+		beta = nMaxColors > 8 ? (float) max(.25, 1 - (.022f + weight) * nMaxColors) : 1;
 		if (nMaxColors > 64 || weight > .02)
 			beta *= .4f;
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
