@@ -587,7 +587,7 @@ namespace PnnLABQuant
 
 	Mat PnnLABQuantizer::QuantizeImageByPal(const Mat4b pixels4b, const Mat palette, vector<uchar>& bytes, uint& nMaxColors, bool dither)
 	{
-		if (hasSemiTransparency || isGA)
+		if (hasSemiTransparency)
 			weight *= -1;
 
 		if(dither && !hasSemiTransparency && saliencies.empty() && weight < .052) {
