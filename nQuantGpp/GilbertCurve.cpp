@@ -285,7 +285,7 @@ namespace Peano
 		sortedByYDiff = !hasAlpha && m_saliencies && nMaxColors >= 128 && weight >= .052;
 		nMaxColors = palette.cols * palette.rows;
 		beta = nMaxColors > 8 ? (float) max(.25, 1 - (.022f + weight) * nMaxColors) : 1;
-		if (nMaxColors > 64 || weight > .02)
+		if (nMaxColors > 64 || (beta < 1 && weight > .02))
 			beta *= .4f;
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
