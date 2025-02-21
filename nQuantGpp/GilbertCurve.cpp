@@ -295,7 +295,7 @@ namespace Peano
 		nMaxColors = palette.cols * palette.rows;
 		beta = nMaxColors > 8 ? (float) (1.05f - .0125f * nMaxColors) : 1;
 		if (nMaxColors > 8) {
-			auto boundary = .01 - .000063 * nMaxColors;
+			auto boundary = .005 - .0000625 * nMaxColors;
 			beta = (float) (weight > boundary ? max(.25, beta - nMaxColors * weight) : min(1.5, beta + nMaxColors * weight));
 		}
 		if (nMaxColors > 64 || (nMaxColors > 8 && weight > .02))
