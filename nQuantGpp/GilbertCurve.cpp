@@ -293,7 +293,7 @@ namespace Peano
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		sortedByYDiff = !hasAlpha && m_saliencies && nMaxColors >= 128 && weight >= .052;
 		nMaxColors = palette.cols * palette.rows;
-		beta = nMaxColors > 8 ? (float) (1.05f - .0125f * nMaxColors) : 1;
+		beta = nMaxColors > 8 ? (float) (.6f - .00625f * nMaxColors) : 1;
 		if (nMaxColors > 8) {
 			auto boundary = .005 - .0000625 * nMaxColors;
 			beta = (float) (weight > boundary ? max(.25, beta - nMaxColors * weight) : min(1.5, beta + nMaxColors * weight));
