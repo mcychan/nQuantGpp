@@ -125,11 +125,11 @@ namespace Peano
 			GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
 			auto strength = 1 / 3.0f;
 			int acceptedDiff = max(2, nMaxColors - margin);
-			if (nMaxColors <= 8 && m_saliencies[bidx] > .2f && m_saliencies[bidx] < .25f)
+			if (nMaxColors <= 4 && m_saliencies[bidx] > .2f && m_saliencies[bidx] < .25f)
 				c2 = BlueNoise::diffuse(pixel, qPixel, beta * 2 / m_saliencies[bidx], strength, x, y);
-			else if (nMaxColors <= 8 || CIELABConvertor::Y_Diff(pixel, c2) < (2 * acceptedDiff)) {
+			else if (nMaxColors <= 4 || CIELABConvertor::Y_Diff(pixel, c2) < (2 * acceptedDiff)) {
 				c2 = BlueNoise::diffuse(pixel, qPixel, beta * .5f / m_saliencies[bidx], strength, x, y);
-				if (nMaxColors <= 8 && CIELABConvertor::U_Diff(pixel, c2) > (8 * acceptedDiff)) {
+				if (nMaxColors <= 4 && CIELABConvertor::U_Diff(pixel, c2) > (8 * acceptedDiff)) {
 					Vec4b c1(b_pix, g_pix, r_pix, a_pix);
 					if (m_saliencies[bidx] > .65f)
 						c1 = pixel;
@@ -293,12 +293,12 @@ namespace Peano
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		sortedByYDiff = !hasAlpha && m_saliencies && nMaxColors >= 128 && weight >= .052;
 		nMaxColors = palette.cols * palette.rows;
-		beta = nMaxColors > 8 ? (float) (.6f - .00625f * nMaxColors) : 1;
-		if (nMaxColors > 8) {
+		beta = nMaxColors > 4 ? (float) (.6f - .00625f * nMaxColors) : 1;
+		if (nMaxColors > 4) {
 			auto boundary = .005 - .0000625 * nMaxColors;
 			beta = (float) (weight > boundary ? max(.25, beta - nMaxColors * weight) : min(1.5, beta + nMaxColors * weight));
 		}
-		if (nMaxColors > 64 || (nMaxColors > 8 && weight > .02))
+		if (nMaxColors > 64 || (nMaxColors > 4 && weight > .02))
 			beta *= .4f;
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
