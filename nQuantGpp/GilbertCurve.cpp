@@ -297,6 +297,8 @@ namespace Peano
 		if (nMaxColors > 4) {
 			auto boundary = .005 - .0000625 * nMaxColors;
 			beta = (float) (weight > boundary ? max(.25, beta - nMaxColors * weight) : min(1.5, beta + nMaxColors * weight));
+			if (m_nMaxColor < 16)
+				beta *= .75f;
 		}
 		if (nMaxColors > 64 || (nMaxColors > 4 && weight > .02))
 			beta *= .4f;
