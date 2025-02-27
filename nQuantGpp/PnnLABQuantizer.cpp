@@ -254,7 +254,7 @@ namespace PnnLABQuant
 				else if (proportional > .028)
 					ratio = min(1.0, weight * exp(3.225));
 				else {
-					auto beta = (maxbins % 2 == 0) ? 2 : 1;
+					auto beta = (nMaxColors < 16 && maxbins % 2 == 0) ? 2 : 1;
 					ratio = min(1.0, proportional + beta * weight * exp(1.947));
 				}
 			}
@@ -610,13 +610,9 @@ namespace PnnLABQuant
 		auto GetColorIndex = [&](const Vec4b& c) -> int {
 			return GetArgbIndex(c, hasSemiTransparency, hasAlpha());
 		};
-		DitherFn ditherFn;
-		if (hasAlpha() || nMaxColors < 64)
-			ditherFn = [&](const Mat palette, const Vec4b& c, const uint pos) -> unsigned short {
-			return nearestColorIndex(palette, c, pos);
-		};
-		else
-			ditherFn = [&](const Mat palette, const Vec4b& c, const uint pos) -> unsigned short {
+		auto NearestColorIndex = [this, nMaxColors](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
+			if (hasAlpha() || nMaxColors < 64)
+				return nearestColorIndex(palette, c, pos);
 			return closestColorIndex(palette, c, pos);
 		};
 
@@ -625,7 +621,7 @@ namespace PnnLABQuant
 
 		if (nMaxColors > 256) {
 			Mat qPixels(bitmapHeight, bitmapWidth, palette.type());
-			Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight);
+			Peano::GilbertCurve::dither(pixels4b, palette, NearestColorIndex, GetColorIndex, qPixels, saliencies.data(), weight);
 
 			pixelMap.clear();
 			clear();
@@ -634,12 +630,12 @@ namespace PnnLABQuant
 		}
 
 		Mat1b qPixels(bitmapHeight, bitmapWidth);
-		Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight);
+		Peano::GilbertCurve::dither(pixels4b, palette, NearestColorIndex, GetColorIndex, qPixels, saliencies.data(), weight);
 
 		if (!dither) {
 			const auto delta = sqr(nMaxColors) / pixelMap.size();
 			auto weight = delta > 0.023 ? 1.0f : (float)(36.921 * delta + 0.906);
-			BlueNoise::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, weight);
+			BlueNoise::dither(pixels4b, palette, NearestColorIndex, GetColorIndex, qPixels, weight);
 		}
 
 		pixelMap.clear();
