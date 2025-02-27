@@ -285,10 +285,11 @@ namespace Peano
 		m_pPalette = &palette;
 		m_qPixels = &qPixels;
 		m_ditherFn = ditherFn;
+		m_getColorIndexFn = getColorIndexFn;
 		auto hasAlpha = weight < 0;
 		m_saliencies = hasAlpha ? nullptr : saliencies;
-		m_getColorIndexFn = getColorIndexFn;
-		
+
+		errorq.clear();
 		weight = abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		sortedByYDiff = !hasAlpha && m_saliencies && nMaxColors >= 128 && weight >= .052;
