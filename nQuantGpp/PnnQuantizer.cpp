@@ -432,7 +432,7 @@ namespace PnnQuant
 		vector<float> saliencies;
 		if (nMaxColors > 256) {
 			Mat qPixels(bitmapHeight, bitmapWidth, srcImg.type());
-			Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight);
+			Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight, dither);
 
 			closestMap.clear();
 			nearestMap.clear();
@@ -440,9 +440,9 @@ namespace PnnQuant
 		}
 
 		Mat1b qPixels(bitmapHeight, bitmapWidth);
-		Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight);
+		Peano::GilbertCurve::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels, saliencies.data(), weight, dither);
 
-		if(!dither)
+		if(!dither && nMaxColors > 32)
 			BlueNoise::dither(pixels4b, palette, ditherFn, GetColorIndex, qPixels);
 
 		if (m_transparentPixelIndex >= 0) {

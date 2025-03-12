@@ -36,7 +36,7 @@ namespace Peano
 		}
 	};
 
-	bool sortedByYDiff;
+	bool m_dither, sortedByYDiff;
 	uint m_width, m_height;
 	float beta;
 	const Mat4b* m_pPixels4b;
@@ -119,7 +119,7 @@ namespace Peano
 
 		Vec4b c2(b_pix, g_pix, r_pix, a_pix);
 		ushort qPixelIndex = 0;
-		if (m_saliencies != nullptr && !sortedByYDiff)
+		if (m_saliencies != nullptr && m_dither && !sortedByYDiff)
 		{
 			Vec4b qPixel;
 			GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
@@ -153,6 +153,11 @@ namespace Peano
 					Vec4b c1(b_pix, g_pix, r_pix, a_pix);
 					c2 = c1;
 				}
+			}
+
+			if (DITHER_MAX < 16 && m_saliencies[bidx] < .6f && CIELABConvertor::Y_Diff(pixel, c2) > margin - 1) {
+				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
+				c2 = c1;
 			}
 
 			int offset = m_getColorIndexFn(c2);
@@ -277,7 +282,7 @@ namespace Peano
 		generate2d(x + (ax - dax) + (bx2 - dbx), y + (ay - day) + (by2 - dby), -bx2, -by2, -(ax - ax2), -(ay - ay2));
 	}
 
-	void GilbertCurve::dither(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn, GetColorIndexFn getColorIndexFn, Mat qPixels, float* saliencies, double weight)
+	void GilbertCurve::dither(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn, GetColorIndexFn getColorIndexFn, Mat qPixels, float* saliencies, double weight, bool dither)
 	{
 		m_width = pixels4b.cols;
 		m_height = pixels4b.rows;
@@ -288,6 +293,7 @@ namespace Peano
 		m_getColorIndexFn = getColorIndexFn;
 		auto hasAlpha = weight < 0;
 		m_saliencies = hasAlpha ? nullptr : saliencies;
+		m_dither = dither;
 
 		errorq.clear();
 		weight = abs(weight);
@@ -307,7 +313,7 @@ namespace Peano
 			beta *= .95f;
 		if (nMaxColors > 64 || (nMaxColors > 4 && weight > .02))
 			beta *= .4f;
-		DITHER_MAX = weight < .01 ? (weight > .0025) ? (uchar)25 : 16 : 9;
+		DITHER_MAX = weight < .015 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
 		auto deviation = !hasAlpha && weight > .002 ? .25 : 1;
 		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : DITHER_MAX;

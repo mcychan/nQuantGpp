@@ -463,7 +463,7 @@ namespace PnnLABQuant
 			closest[2] = closest[3] = USHRT_MAX;
 			
 			int start = 0;
-			if(BlueNoise::TELL_BLUE_NOISE[pos & 4095] > -88)
+			if(c[3] > 0xE0 && BlueNoise::TELL_BLUE_NOISE[pos & 4095] > -88)
 				start = 1;
 			
 			for (; k < nMaxColors; ++k) {
@@ -621,7 +621,7 @@ namespace PnnLABQuant
 
 		if (nMaxColors > 256) {
 			Mat qPixels(bitmapHeight, bitmapWidth, palette.type());
-			Peano::GilbertCurve::dither(pixels4b, palette, NearestColorIndex, GetColorIndex, qPixels, saliencies.data(), weight);
+			Peano::GilbertCurve::dither(pixels4b, palette, NearestColorIndex, GetColorIndex, qPixels, saliencies.data(), weight, dither);
 
 			pixelMap.clear();
 			clear();
@@ -630,9 +630,9 @@ namespace PnnLABQuant
 		}
 
 		Mat1b qPixels(bitmapHeight, bitmapWidth);
-		Peano::GilbertCurve::dither(pixels4b, palette, NearestColorIndex, GetColorIndex, qPixels, saliencies.data(), weight);
+		Peano::GilbertCurve::dither(pixels4b, palette, NearestColorIndex, GetColorIndex, qPixels, saliencies.data(), weight, dither);
 
-		if (!dither) {
+		if (!dither && nMaxColors > 32) {
 			const auto delta = sqr(nMaxColors) / pixelMap.size();
 			auto weight = delta > 0.023 ? 1.0f : (float)(36.921 * delta + 0.906);
 			BlueNoise::dither(pixels4b, palette, NearestColorIndex, GetColorIndex, qPixels, weight);
