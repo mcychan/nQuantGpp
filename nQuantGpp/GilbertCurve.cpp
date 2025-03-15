@@ -143,8 +143,6 @@ namespace Peano
 				if (nMaxColors > 8 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > (2 * acceptedDiff))) {
 					auto kappa = m_saliencies[bidx] < .4f ? beta * .4f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 					Vec4b c1(b_pix, g_pix, r_pix, a_pix);
-					if (m_saliencies[bidx] < .6f)
-						c1 = pixel;
 					c2 = BlueNoise::diffuse(c1, qPixel, kappa, strength, x, y);
 				}
 			}
