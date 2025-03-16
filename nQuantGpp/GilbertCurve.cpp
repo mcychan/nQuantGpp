@@ -306,8 +306,6 @@ namespace Peano
 			beta = (float) (weight > boundary ? max(.25, beta - nMaxColors * weight) : min(1.5, beta + nMaxColors * weight));
 			if(nMaxColors > 32)
 				beta += .1f;
-			else if (nMaxColors < 16)
-				beta *= .75f;
 		}
 		else
 			beta *= .95f;
