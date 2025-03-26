@@ -476,7 +476,7 @@ namespace PnnLABQuant
 					continue;
 
 				if (hasSemiTransparency)
-					err += PA * (1 - ratio) * sqr(c2[3] - c[3]);
+					err += PA * sqr(c2[3] - c[3]);
 
 				for (int i = 0; i < 3; ++i) {
 					err += ratio * sqr(coeffs[i][0] * (c2[2] - c[2]));
