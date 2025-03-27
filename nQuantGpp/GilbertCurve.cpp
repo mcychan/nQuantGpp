@@ -96,10 +96,65 @@ namespace Peano
 		return 0;
 	}
 
+	ushort ditherPixel(int x, int y, Vec4b c2, float beta)
+	{
+		const int bidx = x + y * m_width;
+		auto pixel = m_pPixels4b->at<Vec4b>(y, x);
+		auto b_pix = c2[0];
+		auto g_pix = c2[1];
+		auto r_pix = c2[2];
+		auto a_pix = c2[3];
+
+		auto qPixelIndex = m_qPixels->at<uchar>(y, x);
+		Vec4b qPixel;
+		GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
+		auto strength = 1 / 3.0f;
+		int acceptedDiff = max(2, nMaxColors - margin);
+		if (nMaxColors <= 4 && m_saliencies[bidx] > .2f && m_saliencies[bidx] < .25f)
+			c2 = BlueNoise::diffuse(pixel, qPixel, beta * 2 / m_saliencies[bidx], strength, x, y);
+		else if (nMaxColors <= 4 || CIELABConvertor::Y_Diff(pixel, c2) < (2 * acceptedDiff)) {
+			c2 = BlueNoise::diffuse(pixel, qPixel, beta * .5f / m_saliencies[bidx], strength, x, y);
+			if (nMaxColors <= 4 && CIELABConvertor::U_Diff(pixel, c2) > (8 * acceptedDiff)) {
+				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
+				if (m_saliencies[bidx] > .65f)
+					c1 = pixel;
+				c2 = BlueNoise::diffuse(c1, qPixel, beta * m_saliencies[bidx], strength, x, y);
+			}
+			if (CIELABConvertor::U_Diff(pixel, c2) > (margin * acceptedDiff))
+				c2 = BlueNoise::diffuse(pixel, qPixel, beta / m_saliencies[bidx], strength, x, y);
+		}
+		
+		if (nMaxColors < 3 || margin > 6) {
+			if (nMaxColors > 4 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > (2 * acceptedDiff))) {
+				auto kappa = m_saliencies[bidx] < .4f ? beta * .4f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
+				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
+				c2 = BlueNoise::diffuse(c1, qPixel, kappa, strength, x, y);
+			}
+		}
+		else if (nMaxColors > 4 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > acceptedDiff)) {
+			if (beta < .3f && (nMaxColors <= 32 || m_saliencies[bidx] < beta))
+				c2 = BlueNoise::diffuse(c2, qPixel, beta * .4f * m_saliencies[bidx], strength, x, y);
+			else {
+				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
+				c2 = c1;
+			}
+		}
+
+		if (DITHER_MAX < 16 && m_saliencies[bidx] < .6f && CIELABConvertor::Y_Diff(pixel, c2) > margin - 1) {
+			Vec4b c1(b_pix, g_pix, r_pix, a_pix);
+			c2 = c1;
+		}
+
+		int offset = m_getColorIndexFn(c2);
+		if (!m_lookup[offset])
+			m_lookup[offset] = m_ditherFn(*m_pPalette, c2, bidx) + 1;
+		return m_lookup[offset] - 1;
+	}
+
 	void ditherPixel(int x, int y)
 	{
 		int bidx = x + y * m_width;
-		auto& pixel = m_pPixels4b->at<Vec4b>(y, x);
+		auto pixel = m_pPixels4b->at<Vec4b>(y, x);
 
 		ErrorBox error(pixel);
 		int i = sortedByYDiff ? m_weights.size() - 1 : 0;
@@ -122,53 +177,9 @@ namespace Peano
 		auto a_pix = static_cast<uchar>(min(UCHAR_MAX, (int) max(error[3], 0.0f)));
 
 		Vec4b c2(b_pix, g_pix, r_pix, a_pix);
-		ushort qPixelIndex = 0;
+		auto& qPixelIndex = m_qPixels->at<uchar>(y, x);
 		if (m_saliencies != nullptr && m_dither && !sortedByYDiff)
-		{
-			Vec4b qPixel;
-			GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
-			auto strength = 1 / 3.0f;
-			int acceptedDiff = max(2, nMaxColors - margin);
-			if (nMaxColors <= 4 && m_saliencies[bidx] > .2f && m_saliencies[bidx] < .25f)
-				c2 = BlueNoise::diffuse(pixel, qPixel, beta * 2 / m_saliencies[bidx], strength, x, y);
-			else if (nMaxColors <= 4 || CIELABConvertor::Y_Diff(pixel, c2) < (2 * acceptedDiff)) {
-				c2 = BlueNoise::diffuse(pixel, qPixel, beta * .5f / m_saliencies[bidx], strength, x, y);
-				if (nMaxColors <= 4 && CIELABConvertor::U_Diff(pixel, c2) > (8 * acceptedDiff)) {
-					Vec4b c1(b_pix, g_pix, r_pix, a_pix);
-					if (m_saliencies[bidx] > .65f)
-						c1 = pixel;
-					c2 = BlueNoise::diffuse(c1, qPixel, beta * m_saliencies[bidx], strength, x, y);
-				}
-				if (CIELABConvertor::U_Diff(pixel, c2) > (margin * acceptedDiff))
-					c2 = BlueNoise::diffuse(pixel, qPixel, beta / m_saliencies[bidx], strength, x, y);
-			}
-			
-			if (nMaxColors < 3 || margin > 6) {
-				if (nMaxColors > 4 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > (2 * acceptedDiff))) {
-					auto kappa = m_saliencies[bidx] < .4f ? beta * .4f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
-					Vec4b c1(b_pix, g_pix, r_pix, a_pix);
-					c2 = BlueNoise::diffuse(c1, qPixel, kappa, strength, x, y);
-				}
-			}
-			else if (nMaxColors > 4 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > acceptedDiff)) {
-				if (beta < .3f && (nMaxColors <= 32 || m_saliencies[bidx] < beta))
-					c2 = BlueNoise::diffuse(c2, qPixel, beta * .4f * m_saliencies[bidx], strength, x, y);
-				else {
-					Vec4b c1(b_pix, g_pix, r_pix, a_pix);
-					c2 = c1;
-				}
-			}
-
-			if (DITHER_MAX < 16 && m_saliencies[bidx] < .6f && CIELABConvertor::Y_Diff(pixel, c2) > margin - 1) {
-				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
-				c2 = c1;
-			}
-
-			int offset = m_getColorIndexFn(c2);
-			if (!m_lookup[offset])
-				m_lookup[offset] = m_ditherFn(*m_pPalette, c2, bidx) + 1;
-			qPixelIndex = m_lookup[offset] - 1;
-		}
+			qPixelIndex = ditherPixel(x, y, c2, beta);
 		else if (nMaxColors <= 32 && a_pix > 0xF0)
 		{
 			int offset = m_getColorIndexFn(c2);
@@ -196,8 +207,6 @@ namespace Peano
 		c2 = m_pPalette->at<Vec4b>(qPixelIndex, 0);
 		if (nMaxColors > 256)
 			SetPixel(*m_qPixels, y, x, c2);
-		else
-			m_qPixels->at<uchar>(y, x) = qPixelIndex;
 
 		error[0] = b_pix - c2[0];
 		error[1] = g_pix - c2[1];
@@ -208,15 +217,18 @@ namespace Peano
 		auto diffuse = BlueNoise::TELL_BLUE_NOISE[bidx & 4095] > thresold;
 		error.yDiff = sortedByYDiff ? CIELABConvertor::Y_Diff(pixel, c2) : 1;
 		auto illusion = !diffuse && BlueNoise::TELL_BLUE_NOISE[(int)(error.yDiff * 4096) & 4095] > thresold;
-		auto yDiff = 1.0;
-		if (!m_saliencies && !sortedByYDiff)
-			yDiff = CIELABConvertor::Y_Diff(pixel, c2);
 
+		auto unaccepted = false;
 		int errLength = denoise ? error.length() - 1 : 0;
 		for (int j = 0; j < errLength; ++j) {
-			if (abs(error.p[j]) / yDiff >= ditherMax) {
+			if (abs(error.p[j]) >= ditherMax) {
+				if (sortedByYDiff && !m_saliencies) {
+					unaccepted = true;
+					break;
+				}
+
 				if (diffuse)
-					error[j] = (float)tanh(error.p[j] / maxErr * 8) * (ditherMax - 1);
+					error[j] = (float)tanh(error.p[j] / maxErr * 20) * (ditherMax - 1);
 				else {
 					if (illusion)
 						error[j] = (float)(error.p[j] / maxErr * error.yDiff) * (ditherMax - 1);
@@ -224,6 +236,18 @@ namespace Peano
 						error[j] /= (float)(1 + sqrt(ditherMax));
 				}
 			}
+		}
+
+		if (unaccepted) {
+			qPixelIndex = ditherPixel(x, y, c2, 1.25f);
+			c2 = m_pPalette->at<Vec4b>(qPixelIndex, 0);
+			if (nMaxColors > 256)
+				SetPixel(*m_qPixels, y, x, c2);
+
+			error[0] = b_pix - c2[0];
+			error[1] = g_pix - c2[1];
+			error[2] = r_pix - c2[2];
+			error[3] = a_pix - c2[3];
 		}
 
 		if (sortedByYDiff)
