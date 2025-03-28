@@ -222,10 +222,8 @@ namespace Peano
 		int errLength = denoise ? error.length() - 1 : 0;
 		for (int j = 0; j < errLength; ++j) {
 			if (abs(error.p[j]) >= ditherMax) {
-				if (sortedByYDiff && !m_saliencies) {
+				if (sortedByYDiff && !m_saliencies)
 					unaccepted = true;
-					break;
-				}
 
 				if (diffuse)
 					error[j] = (float)tanh(error.p[j] / maxErr * 20) * (ditherMax - 1);
@@ -239,15 +237,11 @@ namespace Peano
 		}
 
 		if (unaccepted) {
-			qPixelIndex = ditherPixel(x, y, c2, 1.25f);
-			c2 = m_pPalette->at<Vec4b>(qPixelIndex, 0);
-			if (nMaxColors > 256)
+			qPixelIndex = ditherPixel(x, y, c2, 1.25f);			
+			if (nMaxColors > 256) {
+				c2 = m_pPalette->at<Vec4b>(qPixelIndex, 0);
 				SetPixel(*m_qPixels, y, x, c2);
-
-			error[0] = b_pix - c2[0];
-			error[1] = g_pix - c2[1];
-			error[2] = r_pix - c2[2];
-			error[3] = a_pix - c2[3];
+			}
 		}
 
 		if (sortedByYDiff)
