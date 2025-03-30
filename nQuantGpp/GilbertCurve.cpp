@@ -320,7 +320,7 @@ namespace Peano
 		errorq.clear();
 		weight = abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
-		sortedByYDiff = !hasAlpha && m_saliencies && nMaxColors >= 128 && weight >= .052;
+		sortedByYDiff = m_saliencies && nMaxColors >= 128 && (!hasAlpha || weight < .18);
 		nMaxColors = palette.cols * palette.rows;
 		beta = nMaxColors > 4 ? (float) (.6f - .00625f * nMaxColors) : 1;
 		if (nMaxColors > 4) {
