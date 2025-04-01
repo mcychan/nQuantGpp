@@ -105,9 +105,8 @@ namespace Peano
 		auto r_pix = c2[2];
 		auto a_pix = c2[3];
 
-		auto qPixelIndex = m_qPixels->at<uchar>(y, x);
 		Vec4b qPixel;
-		GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
+		GrabPixel(qPixel, *m_pPalette, 0, 0);
 		auto strength = 1 / 3.0f;
 		int acceptedDiff = max(2, nMaxColors - margin);
 		if (nMaxColors <= 4 && m_saliencies[bidx] > .2f && m_saliencies[bidx] < .25f)
@@ -128,6 +127,8 @@ namespace Peano
 			if (nMaxColors > 4 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > (2 * acceptedDiff))) {
 				auto kappa = m_saliencies[bidx] < .4f ? beta * .4f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
+				if (m_saliencies[bidx] < .4f)
+					c1 = pixel;
 				c2 = BlueNoise::diffuse(c1, qPixel, kappa, strength, x, y);
 			}
 		}
@@ -151,7 +152,7 @@ namespace Peano
 		return m_lookup[offset] - 1;
 	}
 
-	void ditherPixel(int x, int y)
+	void diffusePixel(int x, int y)
 	{
 		int bidx = x + y * m_width;
 		auto pixel = m_pPixels4b->at<Vec4b>(y, x);
@@ -177,7 +178,7 @@ namespace Peano
 		auto a_pix = static_cast<uchar>(min(UCHAR_MAX, (int) max(error[3], 0.0f)));
 
 		Vec4b c2(b_pix, g_pix, r_pix, a_pix);
-		auto& qPixelIndex = m_qPixels->at<uchar>(y, x);
+		ushort qPixelIndex = 0;
 		if (m_saliencies != nullptr && m_dither && !sortedByYDiff)
 			qPixelIndex = ditherPixel(x, y, c2, beta);
 		else if (nMaxColors <= 32 && a_pix > 0xF0)
@@ -207,6 +208,8 @@ namespace Peano
 		c2 = m_pPalette->at<Vec4b>(qPixelIndex, 0);
 		if (nMaxColors > 256)
 			SetPixel(*m_qPixels, y, x, c2);
+		else
+			m_qPixels->at<uchar>(y, x) = qPixelIndex;
 
 		error[0] = b_pix - c2[0];
 		error[1] = g_pix - c2[1];
@@ -237,7 +240,7 @@ namespace Peano
 		}
 
 		if (unaccepted) {
-			qPixelIndex = ditherPixel(x, y, c2, 1.25f);			
+			qPixelIndex = ditherPixel(x, y, c2, 1.25f);
 			if (nMaxColors > 256) {
 				c2 = m_pPalette->at<Vec4b>(qPixelIndex, 0);
 				SetPixel(*m_qPixels, y, x, c2);
@@ -260,7 +263,7 @@ namespace Peano
 
 		if (h == 1) {
 			for (int i = 0; i < w; ++i) {
-				ditherPixel(x, y);
+				diffusePixel(x, y);
 				x += dax;
 				y += day;
 			}
@@ -269,7 +272,7 @@ namespace Peano
 
 		if (w == 1) {
 			for (int i = 0; i < h; ++i) {
-				ditherPixel(x, y);
+				diffusePixel(x, y);
 				x += dbx;
 				y += dby;
 			}
@@ -333,6 +336,7 @@ namespace Peano
 			beta *= .95f;
 		if (nMaxColors > 64 || (nMaxColors > 4 && weight > .02))
 			beta *= .4f;
+
 		DITHER_MAX = weight < .015 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
 		auto deviation = !hasAlpha && weight > .002 ? .25 : 1;

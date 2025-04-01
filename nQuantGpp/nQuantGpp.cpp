@@ -141,10 +141,10 @@ inline bool fileExists(const string& path)
 
 bool OutputImage(const fs::path& sourcePath, const string& algorithm, const uint& nMaxColors, string& targetDir, vector<uchar>& bytes, Mat dest)
 {
-	auto fileName = sourcePath.filename().string();
+	auto fileName = sourcePath.filename().u8string();
 	fileName = fileName.substr(0, fileName.find_last_of('.'));
 
-	targetDir = fileExists(targetDir) ? fs::canonical(fs::path(targetDir)).string() : fs::current_path().string();
+	targetDir = fileExists(targetDir) ? fs::canonical(fs::path(targetDir)).u8string() : fs::current_path().u8string();
 	auto destPath = targetDir + "/" + fileName + "-";
 	string algo(algorithm.begin(), algorithm.end());
 	destPath += algo + "quant";
@@ -248,13 +248,13 @@ void OutputImages(const fs::path& sourceDir, string& targetDir, const uint& nMax
 			Mat source;
 			if(entry.path().extension() == ".gif") {
 				int position = 0;
-				auto cap = VideoCapture(entry.path().string());
+				auto cap = VideoCapture(entry.path().u8string());
 				cap.set(CAP_PROP_POS_FRAMES, position);
 				cap.read(source);
 				cap.release();
 			}
 			else
-				source = imread(entry.path().string(), IMREAD_UNCHANGED);
+				source = imread(entry.path().u8string(), IMREAD_UNCHANGED);
 
 			if (source.empty())
 				continue;
@@ -273,8 +273,8 @@ void OutputImages(const fs::path& sourceDir, string& targetDir, const uint& nMax
 	auto imgList = pGAq->QuantizeImage(bytesList, dither);
 	if(!bytesList.empty()) {
 		int i = 0;
-		targetDir = fileExists(targetDir) ? fs::canonical(fs::path(targetDir)).string() : fs::current_path().string();
-		auto fileName = sourcePaths[0].filename().string();
+		targetDir = fileExists(targetDir) ? fs::canonical(fs::path(targetDir)).u8string() : fs::current_path().u8string();
+		auto fileName = sourcePaths[0].filename().u8string();
 		fileName = fileName.substr(0, fileName.find_last_of('.'));
 		auto destPath = targetDir + "/" + fileName + "-";
 		string algo = "PNNLAB+";
@@ -312,7 +312,7 @@ int main(int argc, char** argv)
 {
 	ios::sync_with_stdio(false); // Linux gcc
 	tcout.imbue(locale(""));
-	setlocale(LC_CTYPE, "");
+	setlocale(LC_ALL, "");
 	if (argc <= 1) {
 #ifndef _DEBUG
 		PrintUsage();
@@ -320,7 +320,7 @@ int main(int argc, char** argv)
 #endif
 	}
 	
-	auto szDir = fs::current_path().string();
+	auto szDir = fs::current_path().u8string();
 	
 	bool dither = true;
 	uint nMaxColors = 256;
@@ -352,7 +352,7 @@ int main(int argc, char** argv)
 	}
 
 	auto sourcePath = fs::canonical(fs::path(sourceFile));
-	sourceFile = sourcePath.string();
+	sourceFile = sourcePath.u8string();
 
 	sourceFile = (sourceFile[sourceFile.length() - 1] != '/' && sourceFile[sourceFile.length() - 1] != '\\') ? sourceFile : sourceFile.substr(0, sourceFile.find_last_of("\\/"));
 	auto fileExtension = sourcePath.extension();
@@ -370,7 +370,7 @@ int main(int argc, char** argv)
 	if (!source.empty()) {
 		auto start = chrono::steady_clock::now();
 		if (!fileExists(targetDir))
-			targetDir = fs::path(sourceFile).parent_path().string();
+			targetDir = fs::path(sourceFile).parent_path().u8string();
 		
 		if (algo == "") {
 			//QuantizeImage("MMC", sourceFile, targetDir, source, nMaxColors, dither);
