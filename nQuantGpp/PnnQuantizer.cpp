@@ -242,7 +242,7 @@ namespace PnnQuant
 		}
 
 		/* Fill palette */
-		ushort k = 0;
+		uint k = 0;
 		for (int i = 0; k < nMaxColors; ++k) {
 			auto alpha = (hasSemiTransparency || m_transparentPixelIndex > -1) ? rint(bins[i].ac) : UCHAR_MAX;
 			Vec4b c1((uchar) bins[i].bc, (uchar) bins[i].gc, (uchar) bins[i].rc, alpha);
