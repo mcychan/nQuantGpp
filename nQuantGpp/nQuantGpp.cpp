@@ -225,7 +225,7 @@ vector<uchar> QuantizeImage(const string& algorithm, const string& sourceFile, s
 	else if (algorithm == "OTSU") {
 		nMaxColors = 2;
 		OtsuThreshold::Otsu otsu;
-		otsu.ConvertGrayScaleToBinary(source, bytes);
+		otsu.ConvertGrayScaleToBinary(source, bytes, false, dither);
 	}
 
 	if(dest.empty() && bytes.empty())

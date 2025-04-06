@@ -22,6 +22,6 @@ namespace OtsuThreshold
 	{
 		public:
 			void ConvertToGrayScale(const Mat srcImg, Mat dest);
-			Mat ConvertGrayScaleToBinary(const Mat srcImg, vector<uchar>& bytes, bool isGrayscale = false);
+			Mat ConvertGrayScaleToBinary(const Mat srcImg, vector<uchar>& bytes, bool isGrayscale = false, bool dither = true);
 	};
 }

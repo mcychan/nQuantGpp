@@ -115,7 +115,7 @@ namespace OtsuThreshold
 		}
 	}
 
-	Mat cannyFilter(const Mat4b pixelsGray, double lowerThreshold, double higherThreshold) {
+	Mat cannyFilter(const Mat4b pixelsGray, double lowerThreshold, double higherThreshold, bool dither) {
 		const auto width = pixelsGray.cols;
 		const auto height = pixelsGray.rows;
 		const auto area = (size_t)(width * height);
@@ -236,7 +236,7 @@ namespace OtsuThreshold
 					else if (G[center] < maxThreshold) {
 						G[center] = 0;
 						for (int x = -1; x <= 1; ++x) {
-							for (int y = -1; y <= 1; y++) {
+							for (int y = -1; y <= 1; ++y) {
 								if (x == 0 && y == 0)
 									continue;
 								if (G[center + x * width + y] >= maxThreshold) {
@@ -253,7 +253,7 @@ namespace OtsuThreshold
 					pixel[0] = pixel[1] = pixel[2] = ~grey;
 				}
 			}
-		} while (k++ < 100);
+		} while (k++ < 100 && dither);
 		return pixelsCanny;
 	}
 	
@@ -369,7 +369,7 @@ namespace OtsuThreshold
 	}
 
 
-	Mat Otsu::ConvertGrayScaleToBinary(const Mat srcImg, vector<uchar>& bytes, bool isGrayscale)
+	Mat Otsu::ConvertGrayScaleToBinary(const Mat srcImg, vector<uchar>& bytes, bool isGrayscale, bool dither)
 	{		
 		auto width = srcImg.cols;
 		auto height = srcImg.rows;
@@ -385,7 +385,11 @@ namespace OtsuThreshold
 
 		auto otsuThreshold = getOtsuThreshold(pixels);
 		auto lowerThreshold = 0.03, higherThreshold = 0.1;
-		pixels4b = cannyFilter(pixelsGray, lowerThreshold, higherThreshold);
+		if (!dither) {
+			lowerThreshold = otsuThreshold / 3.0;
+			higherThreshold = otsuThreshold;
+		}
+		pixels4b = cannyFilter(pixelsGray, lowerThreshold, higherThreshold, dither);
 		threshold(pixelsGray, pixels4b, otsuThreshold);
 
 		Mat palette(2, 1, srcImg.type(), scalar);
