@@ -124,7 +124,7 @@ namespace Peano
 		}
 		
 		if (nMaxColors < 3 || margin > 6) {
-			if (nMaxColors > 16 && (CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > (2 * acceptedDiff))) {
+			if (nMaxColors > 4 && (CIELABConvertor::Y_Diff(pixel, c2) > (M_PI * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > (margin * acceptedDiff))) {
 				auto kappa = m_saliencies[bidx] < .4f ? beta * .4f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
 				if (m_saliencies[bidx] < .4f)
