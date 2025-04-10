@@ -51,7 +51,7 @@ jobs:
       - name: Cache OpenCV
         uses: UrielCh/opencv-cache-action@V1
         with:
-          branch: 4.7
+          branch: 4.x
           BUILD_LIST: core
           NO_CONTRIB: ''
     
