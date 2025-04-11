@@ -56,7 +56,7 @@ jobs:
           key: ${{ runner.os }}-opencv-cache
 
       - name: Install OpenCV
-        uses: rayandrews/with-opencv-action@v1
+        uses: mcychan/with-opencv-action@v1
         with:  
           dir: ./opencv-install
           cached: ${{ steps.opencv-cache.outputs.cache-hit }}
