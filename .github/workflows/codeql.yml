@@ -52,7 +52,7 @@ jobs:
         uses: UrielCh/opencv-cache-action@V1
         with:
           branch: 4.x
-          BUILD_LIST: core,imgcodecs,imgproc
+          BUILD_LIST: core
           NO_CONTRIB: ''
     
       - name: Create Build Environment
