@@ -28,7 +28,7 @@ jobs:
     #   - https://gh.io/supported-runners-and-hardware-resources
     #   - https://gh.io/using-larger-runners
     # Consider using larger runners for possible analysis time improvements.
-    runs-on: 'ubuntu-22.04'
+    runs-on: 'ubuntu-24.04'
     timeout-minutes: 360
     permissions:
       actions: read
@@ -63,7 +63,6 @@ jobs:
           opencv-version: '4.10.0'
           opencv-extra-modules: false
           ENABLE_PRECOMPILED_HEADERS: OFF
-          buildpackage-opts: --build=binary --no-sign
     
       - name: Create Build Environment
         # Some projects don't allow in-source building, so create a separate build directory
