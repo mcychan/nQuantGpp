@@ -39,6 +39,7 @@ namespace Peano
 	bool m_dither, sortedByYDiff;
 	uint m_width, m_height;
 	float beta;
+	double m_weight;
 	const Mat4b* m_pPixels4b;
 	const Mat* m_pPalette;
 	Mat* m_qPixels;
@@ -124,7 +125,8 @@ namespace Peano
 		}
 		
 		if (nMaxColors < 3 || margin > 6) {
-			if (nMaxColors > 4 && (CIELABConvertor::Y_Diff(pixel, c2) > (M_PI * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > (margin * acceptedDiff))) {
+			auto delta = (m_weight > .0015 && m_weight < .0025) ? beta : M_PI;
+			if (nMaxColors > 4 && (CIELABConvertor::Y_Diff(pixel, c2) > (delta * acceptedDiff) || CIELABConvertor::U_Diff(pixel, c2) > (margin * acceptedDiff))) {
 				auto kappa = m_saliencies[bidx] < .4f ? beta * .4f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
 				if (m_saliencies[bidx] < .4f)
@@ -321,7 +323,7 @@ namespace Peano
 		m_dither = dither;
 
 		errorq.clear();
-		weight = abs(weight);
+		m_weight = weight = abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		sortedByYDiff = m_saliencies && nMaxColors >= 128 && (!hasAlpha || weight < .18);
 		nMaxColors = palette.cols * palette.rows;
