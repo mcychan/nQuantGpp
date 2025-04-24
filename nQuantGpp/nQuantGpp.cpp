@@ -136,7 +136,7 @@ bool ProcessArgs(int argc, string& algo, uint& nMaxColors, bool& dither, string&
 
 inline bool fileExists(const string& path)
 {
-	return fs::exists(fs::path(path));
+	return fs::exists(fs::u8path(path.c_str()));
 }
 
 bool OutputImage(const fs::path& sourcePath, const string& algorithm, const uint& nMaxColors, string& targetDir, vector<uchar>& bytes, Mat dest)

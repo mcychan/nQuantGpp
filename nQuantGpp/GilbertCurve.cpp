@@ -342,7 +342,7 @@ namespace Peano
 		DITHER_MAX = weight < .015 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
 		auto deviation = !hasAlpha && weight > .002 ? .25 : 1;
-		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : DITHER_MAX;
+		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : (uchar)(DITHER_MAX * (m_saliencies != nullptr ? 1 : 2));
 		int density = nMaxColors > 16 ? 3200 : 1500;
 		if (nMaxColors / weight > 5000 && (weight > .045 || (weight > .01 && nMaxColors < 64)))
 			ditherMax = (uchar)sqr(5 + edge);
