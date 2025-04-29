@@ -239,10 +239,22 @@ namespace Peano
 						error[j] /= (float)(1 + sqrt(ditherMax));
 				}
 			}
+
+			if (sortedByYDiff && m_saliencies == nullptr && abs(error.p[j]) >= DITHER_MAX)
+				unaccepted = true;
 		}
 
 		if (unaccepted) {
-			qPixelIndex = ditherPixel(x, y, c2, 1.25f);
+			if (m_saliencies != nullptr)
+				qPixelIndex = ditherPixel(x, y, c2, 1.25f);
+			else if (CIELABConvertor::Y_Diff(pixel, c2) > 3 && CIELABConvertor::U_Diff(pixel, c2) > 3) {
+				Vec4b qPixel;
+				GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
+				auto strength = 1 / 3.0f;
+				c2 = BlueNoise::diffuse(pixel, qPixel, strength, strength, x, y);
+				qPixelIndex = m_ditherFn(*m_pPalette, c2, bidx);
+			}
+
 			if (nMaxColors > 256) {
 				c2 = m_pPalette->at<Vec4b>(qPixelIndex, 0);
 				SetPixel(*m_qPixels, y, x, c2);
@@ -342,7 +354,7 @@ namespace Peano
 		DITHER_MAX = weight < .015 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
 		auto deviation = !hasAlpha && weight > .002 ? .25 : 1;
-		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : (uchar)(DITHER_MAX * (m_saliencies != nullptr ? 1 : 2));
+		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : (uchar)(DITHER_MAX * (m_saliencies != nullptr ? 1 : 1.5));
 		int density = nMaxColors > 16 ? 3200 : 1500;
 		if (nMaxColors / weight > 5000 && (weight > .045 || (weight > .01 && nMaxColors < 64)))
 			ditherMax = (uchar)sqr(5 + edge);
