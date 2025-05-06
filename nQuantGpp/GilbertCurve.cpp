@@ -143,7 +143,11 @@ namespace Peano
 			}
 		}
 
-		if (DITHER_MAX < 16 && m_saliencies[bidx] < .6f && CIELABConvertor::Y_Diff(pixel, c2) > margin - 1) {
+		if (DITHER_MAX < 16 && nMaxColors > 4 && m_saliencies[bidx] < .6f && CIELABConvertor::Y_Diff(pixel, c2) > margin - 1) {
+			Vec4b c1(b_pix, g_pix, r_pix, a_pix);
+			c2 = c1;
+		}
+		if (beta > 1 && CIELABConvertor::Y_Diff(pixel, c2) > DITHER_MAX) {
 			Vec4b c1(b_pix, g_pix, r_pix, a_pix);
 			c2 = c1;
 		}
