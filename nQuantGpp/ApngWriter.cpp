@@ -441,7 +441,7 @@ namespace PngEncode
 						fdAT_chunk_bytes[5] = 'd';
 
 						vector<uchar> fdAT_index_bytes(4);
-						from_uint32_big_endian(fdAT_index_bytes.data(), seq);
+						from_uint32_big_endian(fdAT_index_bytes.data(), seq++);
 						fdAT_chunk_bytes.insert(fdAT_chunk_bytes.begin() + 8, fdAT_index_bytes.begin(), fdAT_index_bytes.end());
 
 						int idx = (int)fdAT_chunk_bytes.size() - 4;
@@ -450,7 +450,6 @@ namespace PngEncode
 						CV_Assert((idat_chunk.second - idat_chunk.first + 4) == fdAT_chunk_bytes.size());
 						_data.insert(_data.end() - 12, fdAT_chunk_bytes.begin(), fdAT_chunk_bytes.end());
 					}
-					++seq;
 				}
 				else {
 					auto width = to_uint32_big_endian(&_data[idx + 8]);
@@ -458,7 +457,7 @@ namespace PngEncode
 
 					// insert the fcTL chunk **before** first IDAT chunk
 					vector<uchar> fcTL_chunk_bytes;
-					create_fcTL_chunk(fcTL_chunk_bytes, seq, width, height, _fps);
+					create_fcTL_chunk(fcTL_chunk_bytes, seq++, width, height, _fps);
 					auto fcTL_chunk_start_pos = _data.begin() + next_chunk_start_idx;
 					_data.insert(fcTL_chunk_start_pos, fcTL_chunk_bytes.begin(), fcTL_chunk_bytes.end());
 				}
