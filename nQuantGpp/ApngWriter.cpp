@@ -128,7 +128,7 @@ namespace PngEncode
 		CV_Assert(idx == bytes.size());
 	}
 
-	static void create_fcTL_chunk(vector<uchar>& bytes, const int seq, const uint32_t width, const uint32_t height, const uint32_t fps) {
+	static void create_fcTL_chunk(vector<uchar>& bytes, const int seq, const uint32_t width, const uint32_t height, const uint16_t fps) {
 		uint32_t length = 26;
 		int idx = 0;
 		bytes.resize(length + 12);
@@ -154,7 +154,7 @@ namespace PngEncode
 		idx += 4;
 		from_uint32_big_endian(&bytes[idx], 0);
 		idx += 4;
-		from_uint16_big_endian(&bytes[idx], 1);
+		from_uint16_big_endian(&bytes[idx], 16);
 		idx += 2;
 		from_uint16_big_endian(&bytes[idx], fps);
 		idx += 2;
