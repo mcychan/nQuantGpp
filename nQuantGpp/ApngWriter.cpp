@@ -154,7 +154,7 @@ namespace PngEncode
 		idx += 4;
 		from_uint32_big_endian(&bytes[idx], 0);
 		idx += 4;
-		from_uint16_big_endian(&bytes[idx], 16);
+		from_uint16_big_endian(&bytes[idx], 4);
 		idx += 2;
 		from_uint16_big_endian(&bytes[idx], fps);
 		idx += 2;
