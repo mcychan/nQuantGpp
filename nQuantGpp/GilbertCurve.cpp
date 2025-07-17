@@ -341,7 +341,7 @@ namespace Peano
 		errorq.clear();
 		m_weight = weight = abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
-		sortedByYDiff = m_saliencies && nMaxColors >= 128 && (!hasAlpha || weight < .18);
+		sortedByYDiff = m_saliencies && nMaxColors >= 128 && weight >= .02 && (!hasAlpha || weight < .18);
 		nMaxColors = palette.cols * palette.rows;
 		beta = nMaxColors > 4 ? (float) (.6f - .00625f * nMaxColors) : 1;
 		if (nMaxColors > 4) {
@@ -352,8 +352,11 @@ namespace Peano
 		}
 		else
 			beta *= .95f;
+
 		if (nMaxColors > 64 || (nMaxColors > 4 && weight > .02))
 			beta *= .4f;
+		if (nMaxColors > 128 && weight < .02)
+			beta = .2f;
 
 		DITHER_MAX = weight < .015 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		auto edge = hasAlpha ? 1 : exp(weight) + .25;
