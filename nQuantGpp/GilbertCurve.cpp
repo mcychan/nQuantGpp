@@ -113,7 +113,8 @@ namespace Peano
 		if (nMaxColors <= 4 && m_saliencies[bidx] > .2f && m_saliencies[bidx] < .25f)
 			c2 = BlueNoise::diffuse(pixel, qPixel, beta * 2 / m_saliencies[bidx], strength, x, y);
 		else if (nMaxColors <= 4 || CIELABConvertor::Y_Diff(pixel, c2) < (2 * acceptedDiff)) {
-			c2 = BlueNoise::diffuse(pixel, qPixel, beta * .5f / m_saliencies[bidx], strength, x, y);
+			if (nMaxColors <= 128 || BlueNoise::TELL_BLUE_NOISE[bidx & 4095] > 0)
+				c2 = BlueNoise::diffuse(pixel, qPixel, beta * .5f / m_saliencies[bidx], strength, x, y);
 			if (nMaxColors <= 4 && CIELABConvertor::U_Diff(pixel, c2) > (8 * acceptedDiff)) {
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
 				if (m_saliencies[bidx] > .65f)
@@ -355,7 +356,7 @@ namespace Peano
 
 		if (nMaxColors > 64 || (nMaxColors > 4 && weight > .02))
 			beta *= .4f;
-		if (nMaxColors > 128 && weight < .02)
+		if (nMaxColors > 64 && weight < .02)
 			beta = .2f;
 
 		DITHER_MAX = weight < .015 ? (weight > .0025) ? (uchar)25 : 16 : 9;
