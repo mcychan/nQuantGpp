@@ -440,6 +440,69 @@ namespace PnnLABQuant
 		return k;
 	}
 
+	ushort PnnLABQuantizer::hybridColorIndex(const Mat palette, const Vec4b& c0, const uint pos)
+	{
+		auto argb = GetArgb8888(c0);
+		auto got = nearestMap.find(argb);
+		if (got != nearestMap.end())
+			return got->second;
+
+		ushort k = 0;
+		auto c = c0;
+
+		const auto nMaxColors = palette.rows;
+
+		double mindist = INT_MAX;
+		CIELABConvertor::Lab lab1, lab2;
+		GetLab(c, lab1);
+
+		for (uint i = k; i < nMaxColors; ++i) {
+			Vec4b c2;
+			GrabPixel(c2, palette, i, 0);
+
+			GetLab(c2, lab2);
+			auto curdist = 0.0;
+			if (abs(lab2.L - lab1.L) < nMaxColors) {
+				curdist += sqr(lab2.L - lab1.L);
+				if (curdist > mindist)
+					continue;
+
+				curdist += sqr(lab2.A - lab1.A);
+				if (curdist > mindist)
+					continue;
+
+				curdist += sqr(lab2.B - lab1.B);
+			}
+			else {
+				auto deltaL_prime_div_k_L_S_L = CIELABConvertor::L_prime_div_k_L_S_L(lab1, lab2);
+				curdist += sqr(deltaL_prime_div_k_L_S_L);
+				if (curdist > mindist)
+					continue;
+
+				double a1Prime, a2Prime, CPrime1, CPrime2;
+				auto deltaC_prime_div_k_L_S_L = CIELABConvertor::C_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2);
+				curdist += sqr(deltaC_prime_div_k_L_S_L);
+				if (curdist > mindist)
+					continue;
+
+				double barCPrime, barhPrime;
+				auto deltaH_prime_div_k_L_S_L = CIELABConvertor::H_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2, barCPrime, barhPrime);
+				curdist += sqr(deltaH_prime_div_k_L_S_L);
+				if (curdist > mindist)
+					continue;
+
+				curdist += CIELABConvertor::R_T(barCPrime, barhPrime, deltaC_prime_div_k_L_S_L, deltaH_prime_div_k_L_S_L);
+			}
+
+			if (curdist > mindist)
+				continue;
+			mindist = curdist;
+			k = i;
+		}
+		nearestMap[argb] = k;
+		return k;
+	}
+
 	ushort PnnLABQuantizer::closestColorIndex(const Mat palette, const Vec4b& c, const uint pos)
 	{
 		if(PG < coeffs[0][1] && BlueNoise::TELL_BLUE_NOISE[pos & 4095] > -88)
@@ -596,8 +659,10 @@ namespace PnnLABQuant
 			return GetArgbIndex(c, hasSemiTransparency, hasAlpha());
 		};
 		auto NearestColorIndex = [this, nMaxColors](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
-			if (hasAlpha() || nMaxColors < 64)
+			if (hasAlpha() || nMaxColors <= 4)
 				return nearestColorIndex(palette, c, pos);
+			if (IsGA() && nMaxColors < 16)
+				return hybridColorIndex(palette, c, pos);
 			return closestColorIndex(palette, c, pos);
 		};
 
