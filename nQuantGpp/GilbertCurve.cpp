@@ -180,7 +180,7 @@ namespace Peano
 
 		Vec4b c2(b_pix, g_pix, r_pix, a_pix);
 		ushort qPixelIndex = 0;
-		if (m_saliencies != nullptr && m_dither && !sortedByYDiff)
+		if (m_saliencies != nullptr && m_dither && !sortedByYDiff && pixel[3] < a_pix)
 			qPixelIndex = ditherPixel(x, y, c2, beta);
 		else if (nMaxColors <= 32 && a_pix > 0xF0)
 		{
@@ -227,7 +227,7 @@ namespace Peano
 		for (int j = 0; j < errLength; ++j) {
 			if (abs(error.p[j]) >= ditherMax) {
 				if (sortedByYDiff && !m_saliencies)
-					unaccepted = true;
+					unaccepted = pixel[3] < a_pix;
 
 				if (diffuse)
 					error[j] = (float)tanh(error.p[j] / maxErr * 20) * (ditherMax - 1);
@@ -240,7 +240,7 @@ namespace Peano
 			}
 
 			if (sortedByYDiff && m_saliencies == nullptr && abs(error.p[j]) >= DITHER_MAX)
-				unaccepted = true;
+				unaccepted = pixel[3] < a_pix;
 		}
 
 		if (unaccepted) {
@@ -330,7 +330,7 @@ namespace Peano
 		m_ditherFn = ditherFn;
 		m_getColorIndexFn = getColorIndexFn;
 		auto hasAlpha = weight < 0;
-		m_saliencies = hasAlpha ? nullptr : saliencies;
+		m_saliencies = saliencies;
 		m_dither = dither;
 
 		errorq.clear();
