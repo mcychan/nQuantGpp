@@ -357,6 +357,7 @@ namespace PngEncode
 
 			// no need to manipulate the data after that. let's stop!
 			if (palette.channels() > 3) {
+				next_chunk_start_idx += plte_chunk_bytes.size();
 				vector<uchar> trns_chunk_bytes;
 				if (create_tRNS_chunk(trns_chunk_bytes, palette))
 					bytes.insert(bytes.begin() + next_chunk_start_idx, trns_chunk_bytes.begin(), trns_chunk_bytes.end());
