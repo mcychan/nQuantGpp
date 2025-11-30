@@ -36,7 +36,7 @@ namespace Peano
 		}
 	};
 
-	bool m_dither, sortedByYDiff;
+	bool m_dither, m_hasAlpha, sortedByYDiff;
 	uint m_width, m_height;
 	float beta;
 	double m_weight;
@@ -180,7 +180,7 @@ namespace Peano
 
 		Vec4b c2(b_pix, g_pix, r_pix, a_pix);
 		ushort qPixelIndex = 0;
-		if (m_saliencies != nullptr && m_dither && !sortedByYDiff && pixel[3] < a_pix)
+		if (m_saliencies != nullptr && m_dither && !sortedByYDiff && (!m_hasAlpha || pixel[3] < a_pix))
 			qPixelIndex = ditherPixel(x, y, c2, beta);
 		else if (nMaxColors <= 32 && a_pix > 0xF0)
 		{
@@ -227,7 +227,7 @@ namespace Peano
 		for (int j = 0; j < errLength; ++j) {
 			if (abs(error.p[j]) >= ditherMax) {
 				if (sortedByYDiff && !m_saliencies)
-					unaccepted = pixel[3] < a_pix;
+					unaccepted = true;
 
 				if (diffuse)
 					error[j] = (float)tanh(error.p[j] / maxErr * 20) * (ditherMax - 1);
@@ -240,7 +240,7 @@ namespace Peano
 			}
 
 			if (sortedByYDiff && m_saliencies == nullptr && abs(error.p[j]) >= DITHER_MAX)
-				unaccepted = pixel[3] < a_pix;
+				unaccepted = true;
 		}
 
 		if (unaccepted) {
@@ -329,14 +329,14 @@ namespace Peano
 		m_qPixels = &qPixels;
 		m_ditherFn = ditherFn;
 		m_getColorIndexFn = getColorIndexFn;
-		auto hasAlpha = weight < 0;
+		m_hasAlpha = weight < 0;
 		m_saliencies = saliencies;
 		m_dither = dither;
 
 		errorq.clear();
 		m_weight = weight = abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
-		sortedByYDiff = m_saliencies && nMaxColors >= 128 && weight >= .02 && (!hasAlpha || weight < .18);
+		sortedByYDiff = m_saliencies && nMaxColors >= 128 && weight >= .02 && (!m_hasAlpha || weight < .18);
 		nMaxColors = palette.cols * palette.rows;
 		beta = nMaxColors > 4 ? (float) (.6f - .00625f * nMaxColors) : 1;
 		if (nMaxColors > 4) {
@@ -358,9 +358,9 @@ namespace Peano
 			beta = .2f;
 
 		DITHER_MAX = weight < .015 ? (weight > .0025) ? (uchar)25 : 16 : 9;
-		auto edge = hasAlpha ? 1 : exp(weight) + .25;
-		auto deviation = !hasAlpha && weight > .002 ? .25 : 1;
-		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : (uchar)(DITHER_MAX * (m_saliencies != nullptr ? 1 : 1.5));
+		auto edge = m_hasAlpha ? 1 : exp(weight) + .25;
+		auto deviation = !m_hasAlpha && weight > .002 ? .25 : 1;
+		ditherMax = (m_hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : (uchar)(DITHER_MAX * (m_saliencies != nullptr ? 1 : 1.5));
 		int density = nMaxColors > 16 ? 3200 : 1500;
 		if (nMaxColors / weight > 5000 && (weight > .045 || (weight > .01 && nMaxColors < 64)))
 			ditherMax = (uchar)sqr(5 + edge);
