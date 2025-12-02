@@ -120,11 +120,10 @@ namespace Peano
 		}
 		
 		if (nMaxColors < 3 || margin > 6) {
-			auto delta = (m_weight > .0015 && m_weight < .0025) ? beta : M_PI;
-			if (nMaxColors > 4 && CIELABConvertor::Y_Diff(pixel, c2) > (delta * acceptedDiff)) {
+			if (nMaxColors > 4 && CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff)) {
 				auto kappa = m_saliencies[bidx] < .4f ? beta * .4f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
-				if (m_saliencies[bidx] < .6f)
+				if (m_weight >= .0015 && m_saliencies[bidx] < .6f)
 					c1 = pixel;
 				c2 = BlueNoise::diffuse(c1, qPixel, kappa, strength, x, y);
 			}
@@ -344,7 +343,7 @@ namespace Peano
 			beta = (float) (weight > boundary ? max(.25, beta - nMaxColors * weight) : min(1.5, beta + nMaxColors * weight));
 			if (nMaxColors > 16 && nMaxColors <= 32 && weight < .003)
 				beta += .075f;
-			else if (nMaxColors > 32 && nMaxColors < 256)
+			else if (weight < .0015 || (nMaxColors > 32 && nMaxColors < 256))
 				beta += .1f;
 			if (nMaxColors >= 64 && (weight > .012 && weight < .0125) || (weight > .025 && weight < .03))
 				beta *= 2;
