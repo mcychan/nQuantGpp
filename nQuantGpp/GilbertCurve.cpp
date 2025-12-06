@@ -126,7 +126,7 @@ namespace Peano
 				if (m_weight >= .0015 && m_saliencies[bidx] < .6f)
 					c1 = pixel;
 				if (CIELABConvertor::Y_Diff(c1, c2) > (beta * M_PI * acceptedDiff))
-					kappa = beta * (nMaxColors < 64 ? .55f : .5f) / m_saliencies[bidx];
+					kappa = beta * (m_weight < .0025 ? .55f : .5f) / m_saliencies[bidx];
 
 				c2 = BlueNoise::diffuse(c1, qPixel, kappa, strength, x, y);
 			}
