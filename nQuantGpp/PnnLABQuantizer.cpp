@@ -190,7 +190,7 @@ namespace PnnLABQuant
 			quan_rt = -1;
 
 		weight = min(0.9, nMaxColors * 1.0 / maxbins);
-		if ((nMaxColors < 16 && weight < .0075) || weight < .001 || (weight > .0014 && weight < .0022))
+		if ((nMaxColors < 16 && weight < .0075) || weight < .001 || (weight > .0015 && weight < .0022))
 			quan_rt = 2;
 		if (weight < (isGA ? .03 : .04) && PG < 1 && PG >= coeffs[0][1]) {
 			if (nMaxColors >= 64)
@@ -236,7 +236,7 @@ namespace PnnLABQuant
 		}
 		bins[j].cnt = quanFn(bins[j].cnt);
 
-		const bool texicab = proportional > .025;
+		const bool texicab = quan_rt < 2;
 
 		if(!isGA) {
 			if (hasSemiTransparency)
@@ -300,7 +300,7 @@ namespace PnnLABQuant
 					b1 = heap[1] = heap[heap[0]--];
 				else /* Too old error value */
 				{
-					find_nn(bins.data(), b1, texicab && proportional < 1);
+					find_nn(bins.data(), b1, texicab);
 					tb.tm = i;
 				}
 				/* Push slot down */
