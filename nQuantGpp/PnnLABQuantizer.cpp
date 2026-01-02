@@ -505,6 +505,9 @@ namespace PnnLABQuant
 
 	ushort PnnLABQuantizer::closestColorIndex(const Mat palette, const Vec4b& c, const uint pos)
 	{
+		if (PG < coeffs[0][1] && BlueNoise::TELL_BLUE_NOISE[pos & 4095] > -88)
+			return hybridColorIndex(palette, c, pos);
+
 		ushort k = 0;
 		if (c[3] <= alphaThreshold)
 			return nearestColorIndex(palette, c, pos);
