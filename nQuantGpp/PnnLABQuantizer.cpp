@@ -1,6 +1,6 @@
 ﻿/* Fast pairwise nearest neighbor based algorithm for multilevel thresholding
 Copyright (C) 2004-2016 Mark Tyler and Dmitry Groshev
-Copyright (c) 2018-2025 Miller Cy Chan
+Copyright (c) 2018-2026 Miller Cy Chan
 * error measure; time used is proportional to number of bins squared - WJ */
 
 #include "stdafx.h"
@@ -505,9 +505,6 @@ namespace PnnLABQuant
 
 	ushort PnnLABQuantizer::closestColorIndex(const Mat palette, const Vec4b& c, const uint pos)
 	{
-		if(PG < coeffs[0][1] && BlueNoise::TELL_BLUE_NOISE[pos & 4095] > -88)
-			return nearestColorIndex(palette, c, pos);
-
 		ushort k = 0;
 		if (c[3] <= alphaThreshold)
 			return nearestColorIndex(palette, c, pos);
