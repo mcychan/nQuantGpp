@@ -461,7 +461,7 @@ namespace PnnLABQuant
 			GrabPixel(c2, palette, i, 0);
 
 			GetLab(c2, lab2);
-			auto curdist = 0.0;
+			auto curdist = hasSemiTransparency ? sqr(c2[3] - c[3]) / exp(1.5) : 0;
 			if (abs(lab2.L - lab1.L) < nMaxColors) {
 				curdist += sqr(lab2.L - lab1.L);
 				if (curdist > mindist)
@@ -577,7 +577,9 @@ namespace PnnLABQuant
 			idx = 0;
 
 		auto MAX_ERR = palette.rows;
-		if (closest[idx + 2] >= MAX_ERR || (hasAlpha() && closest[idx + 2] == 0))
+		Vec4b c1;
+		GrabPixel(c1, palette, closest[idx], 0);
+		if (closest[idx + 2] >= MAX_ERR || closest[idx + 2] == 0 || c1[3] < c[3])
 			return nearestColorIndex(palette, c, pos);
 		return closest[idx];
 	}
@@ -659,7 +661,7 @@ namespace PnnLABQuant
 			return GetArgbIndex(c, hasSemiTransparency, hasAlpha());
 		};
 		auto NearestColorIndex = [this, nMaxColors](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
-			if (hasAlpha() || nMaxColors <= 4)
+			if (nMaxColors <= 4)
 				return nearestColorIndex(palette, c, pos);
 			if (IsGA() && nMaxColors < 16)
 				return hybridColorIndex(palette, c, pos);
