@@ -30,8 +30,8 @@ namespace PnnLABQuant
 			bool isGA = false;
 			double proportional = 1.0, ratio = .5, ratioY = .5;
 			unordered_map<ARGB, CIELABConvertor::Lab> pixelMap;
-			unordered_map<ARGB, vector<ushort> > closestMap;
-			unordered_map<ARGB, ushort> nearestMap;
+			unordered_map<int, vector<ushort> > closestMap;
+			unordered_map<int, ushort> nearestMap;
 			vector<float> saliencies;
 
 			struct pnnbin {

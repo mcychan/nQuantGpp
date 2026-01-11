@@ -8,7 +8,6 @@ Copyright (c) 2018-2026 Miller Cy Chan
 #include "bitmapUtilities.h"
 #include "BlueNoise.h"
 #include "GilbertCurve.h"
-#include <ctime>
 #include <unordered_map>
 
 namespace PnnLABQuant
@@ -350,8 +349,8 @@ namespace PnnLABQuant
 
 	ushort PnnLABQuantizer::nearestColorIndex(const Mat palette, const Vec4b& c0, const uint pos)
 	{
-		auto argb = GetArgb8888(c0);
-		auto got = nearestMap.find(argb);
+		int offset = GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
+		auto got = nearestMap.find(offset);
 		if (got != nearestMap.end())
 			return got->second;
 
@@ -436,14 +435,14 @@ namespace PnnLABQuant
 			mindist = curdist;
 			k = i;
 		}
-		nearestMap[argb] = k;
+		nearestMap[offset] = k;
 		return k;
 	}
 
 	ushort PnnLABQuantizer::hybridColorIndex(const Mat palette, const Vec4b& c0, const uint pos)
 	{
-		auto argb = GetArgb8888(c0);
-		auto got = nearestMap.find(argb);
+		int offset = GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
+		auto got = nearestMap.find(offset);
 		if (got != nearestMap.end())
 			return got->second;
 
@@ -499,7 +498,7 @@ namespace PnnLABQuant
 			mindist = curdist;
 			k = i;
 		}
-		nearestMap[argb] = k;
+		nearestMap[offset] = k;
 		return k;
 	}
 
@@ -514,8 +513,8 @@ namespace PnnLABQuant
 
 		const auto nMaxColors = (ushort) palette.rows;
 		vector<ushort> closest(4);
-		auto argb = GetArgb8888(c);
-		auto got = closestMap.find(argb);
+		int offset = GetArgbIndex(c, hasSemiTransparency, hasAlpha());
+		auto got = closestMap.find(offset);
 		if (got == closestMap.end()) {
 			closest[2] = closest[3] = USHRT_MAX;
 
@@ -567,7 +566,7 @@ namespace PnnLABQuant
 			if (closest[3] == USHRT_MAX)
 				closest[1] = closest[0];
 
-			closestMap[argb] = closest;
+			closestMap[offset] = closest;
 		}
 		else
 			closest = got->second;
