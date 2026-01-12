@@ -48,7 +48,6 @@ namespace Peano
 	GetColorIndexFn m_getColorIndexFn;
 	list<ErrorBox> errorq;
 	vector<float> m_weights;
-	ushort* m_lookup;
 	static uchar DITHER_MAX = 9, ditherMax;
 	static int margin, nMaxColors, thresold;
 	static const float BLOCK_SIZE = 343.0f;
@@ -170,10 +169,7 @@ namespace Peano
 			c2 = c1;
 		}
 
-		int offset = m_getColorIndexFn(c2);
-		if (!m_lookup[offset])
-			m_lookup[offset] = m_ditherFn(*m_pPalette, c2, bidx) + 1;
-		return m_lookup[offset] - 1;
+		return m_ditherFn(*m_pPalette, c2, bidx);
 	}
 
 	void diffusePixel(int x, int y)
@@ -211,10 +207,7 @@ namespace Peano
 		}
 		else if (nMaxColors <= 32 && a_pix > 0xF0)
 		{
-			int offset = m_getColorIndexFn(c2);
-			if (!m_lookup[offset])
-				m_lookup[offset] = m_ditherFn(*m_pPalette, c2, bidx) + 1;
-			qPixelIndex = m_lookup[offset] - 1;
+			qPixelIndex = m_ditherFn(*m_pPalette, c2, bidx);
 
 			int acceptedDiff = max(2, nMaxColors - margin);
 			if (m_saliencies != nullptr && (CIELABConvertor::Y_Diff(pixel, c2) > acceptedDiff || CIELABConvertor::U_Diff(pixel, c2) > (2 * acceptedDiff))) {
@@ -397,8 +390,6 @@ namespace Peano
 			ditherMax = (uchar)sqr(5 + edge);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		m_weights.clear();
-		auto pLookup = make_unique<ushort[]>(USHRT_MAX + 1);
-		m_lookup = pLookup.get();
 
 		if(!sortedByYDiff)
 			initWeights(DITHER_MAX);
