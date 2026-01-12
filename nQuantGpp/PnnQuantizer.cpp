@@ -253,7 +253,8 @@ namespace PnnQuant
 
 	ushort nearestColorIndex(const Mat palette, const Vec4b& c0, const uint pos)
 	{
-		int offset = GetArgbIndex(c0, hasSemiTransparency, m_transparentPixelIndex >= 0);
+		const auto nMaxColors = palette.rows;
+		int offset = nMaxColors > 32 ? GetArgb8888(c0) : GetArgbIndex(c0, hasSemiTransparency, m_transparentPixelIndex >= 0);
 		auto got = nearestMap.find(offset);
 		if (got != nearestMap.end())
 			return got->second;
@@ -262,8 +263,7 @@ namespace PnnQuant
 		auto c = c0;
 		if (c[3] <= alphaThreshold)
 			c = m_transparentColor;
-
-		const auto nMaxColors = palette.rows;
+		
 		if (nMaxColors > 2 && m_transparentPixelIndex >= 0 && c[3] > alphaThreshold)
 			k = 1;
 		
@@ -298,15 +298,16 @@ namespace PnnQuant
 		return k;
 	}
 
-	ushort closestColorIndex(const Mat palette, const Vec4b& c, const uint pos)
+	ushort closestColorIndex(const Mat palette, const Vec4b& c0, const uint pos)
 	{
 		ushort k = 0;
+		auto c = c0;
 		if (c[3] <= alphaThreshold)
 			return nearestColorIndex(palette, c, pos);
 
 		const auto nMaxColors = (ushort) palette.rows;
 		vector<ushort> closest(4);
-		int offset = GetArgbIndex(c, hasSemiTransparency, m_transparentPixelIndex >= 0);
+		int offset = nMaxColors > 32 ? GetArgb8888(c0) : GetArgbIndex(c, hasSemiTransparency, m_transparentPixelIndex >= 0);
 		auto got = closestMap.find(offset);
 		if (got == closestMap.end()) {
 			closest[2] = closest[3] = USHRT_MAX;

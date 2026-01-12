@@ -349,7 +349,8 @@ namespace PnnLABQuant
 
 	ushort PnnLABQuantizer::nearestColorIndex(const Mat palette, const Vec4b& c0, const uint pos)
 	{
-		int offset = GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
+		const auto nMaxColors = palette.rows;
+		int offset = nMaxColors > 32 ? GetArgb8888(c0) : GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
 		auto got = nearestMap.find(offset);
 		if (got != nearestMap.end())
 			return got->second;
@@ -359,7 +360,6 @@ namespace PnnLABQuant
 		if (c[3] <= alphaThreshold)
 			c = m_transparentColor;
 
-		const auto nMaxColors = palette.rows;
 		if (nMaxColors > 2 && hasAlpha() && c[3] > alphaThreshold)
 			k = 1;
 
@@ -441,15 +441,14 @@ namespace PnnLABQuant
 
 	ushort PnnLABQuantizer::hybridColorIndex(const Mat palette, const Vec4b& c0, const uint pos)
 	{
-		int offset = GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
+		const auto nMaxColors = palette.rows;
+		int offset = nMaxColors > 32 ? GetArgb8888(c0) : GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
 		auto got = nearestMap.find(offset);
 		if (got != nearestMap.end())
 			return got->second;
 
 		ushort k = 0;
 		auto c = c0;
-
-		const auto nMaxColors = palette.rows;
 
 		double mindist = INT_MAX;
 		CIELABConvertor::Lab lab1, lab2;
@@ -502,18 +501,19 @@ namespace PnnLABQuant
 		return k;
 	}
 
-	ushort PnnLABQuantizer::closestColorIndex(const Mat palette, const Vec4b& c, const uint pos)
+	ushort PnnLABQuantizer::closestColorIndex(const Mat palette, const Vec4b& c0, const uint pos)
 	{
 		if (PG < coeffs[0][1] && BlueNoise::TELL_BLUE_NOISE[pos & 4095] > -88)
-			return hybridColorIndex(palette, c, pos);
+			return hybridColorIndex(palette, c0, pos);
 
 		ushort k = 0;
+		auto c = c0;
 		if (c[3] <= alphaThreshold)
-			return nearestColorIndex(palette, c, pos);
+			return nearestColorIndex(palette, c0, pos);
 
 		const auto nMaxColors = (ushort) palette.rows;
 		vector<ushort> closest(4);
-		int offset = GetArgbIndex(c, hasSemiTransparency, hasAlpha());
+		int offset = nMaxColors > 32 ? GetArgb8888(c0) : GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
 		auto got = closestMap.find(offset);
 		if (got == closestMap.end()) {
 			closest[2] = closest[3] = USHRT_MAX;
