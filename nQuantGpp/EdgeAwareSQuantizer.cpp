@@ -771,13 +771,14 @@ namespace EdgeAwareSQuant
 		}
 
 		if (!dither && nMaxColors > 2) {
+			auto weight = hasSemiTransparency ? -2.5 : 2.5;
 			if (nMaxColors < 32) {
 				Mat flat = saliencyMap.reshape(1, saliencyMap.total() * saliencyMap.channels());
 				vector<float> saliencies = saliencyMap.isContinuous() ? flat : flat.clone();
-				Peano::GilbertCurve::dither(pixels4b, pal, nearestColorIndex, GetColorIndex, qPixels, saliencies.data(), .25);
+				Peano::GilbertCurve::dither(pixels4b, pal, nearestColorIndex, GetColorIndex, qPixels, saliencies.data(), weight);
 			}
 			else
-				Peano::GilbertCurve::dither(pixels4b, pal, nearestColorIndex, GetColorIndex, qPixels, nullptr, .25);
+				Peano::GilbertCurve::dither(pixels4b, pal, nearestColorIndex, GetColorIndex, qPixels, nullptr, weight);
 			nearestMap.clear();
 		}
 

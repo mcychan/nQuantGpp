@@ -380,6 +380,10 @@ namespace Peano
 			beta = .55f;
 
 		DITHER_MAX = weight < .015 ? (weight > .0025) ? (uchar)25 : 16 : 9;
+		if (weight > .99) {
+			beta = weight;
+			DITHER_MAX = 25;
+		}
 		auto edge = m_hasAlpha ? 1 : exp(weight) + .25;
 		auto deviation = !m_hasAlpha && weight > .002 ? .25 : 1;
 		ditherMax = (m_hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : (uchar)(DITHER_MAX * (m_saliencies != nullptr ? 1 : 1.5));

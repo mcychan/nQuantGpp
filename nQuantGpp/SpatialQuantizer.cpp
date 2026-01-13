@@ -1083,7 +1083,8 @@ namespace SpatialQuant
 						saliencies[i] = saliencyBase + (1 - saliencyBase) * lab1.L / 100.0f;
 				}
 			}
-			Peano::GilbertCurve::dither(pixels4b, pal, nearestColorIndex, GetColorIndex, qPixels, saliencies.data());
+			auto weight = hasSemiTransparency ? -1.5 : 1.5;
+			Peano::GilbertCurve::dither(pixels4b, pal, nearestColorIndex, GetColorIndex, qPixels, saliencies.data(), weight);
 			nearestMap.clear();
 		}
 		pixelMap.clear();
