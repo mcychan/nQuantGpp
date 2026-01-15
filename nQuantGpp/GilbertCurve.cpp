@@ -367,7 +367,9 @@ namespace Peano
 			else if (weight < .0015 || (nMaxColors > 32 && nMaxColors < 256))
 				beta += .1f;
 			if (nMaxColors >= 64 && (weight > .012 && weight < .0125) || (weight > .025 && weight < .03))
-				beta *= 2;
+				beta += .05f;
+			else if (nMaxColors > 32 && nMaxColors < 64 && weight < .015)
+				beta = .55f;
 		}
 		else
 			beta *= .95f;
@@ -375,15 +377,14 @@ namespace Peano
 		if (nMaxColors > 64 || (nMaxColors > 4 && weight > .02))
 			beta *= .4f;
 		if (nMaxColors > 64 && weight < .02)
-			beta = .2f;
-		else if (nMaxColors > 32 && nMaxColors < 64 && weight < .015)
-			beta = .55f;
+			beta = .2f;		
 
 		DITHER_MAX = weight < .015 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		if (weight > .99) {
 			beta = weight;
 			DITHER_MAX = 25;
 		}
+
 		auto edge = m_hasAlpha ? 1 : exp(weight) + .25;
 		auto deviation = !m_hasAlpha && weight > .002 ? .25 : 1;
 		ditherMax = (m_hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : (uchar)(DITHER_MAX * (m_saliencies != nullptr ? 1 : 1.5));
