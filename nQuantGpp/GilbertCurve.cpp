@@ -129,7 +129,7 @@ namespace Peano
 				c2 = BlueNoise::diffuse(pixel, qPixel, beta / m_saliencies[bidx], strength, x, y);
 		}
 		
-		if (margin > 6 || (nMaxColors <= 32 && m_weight > .007)) {
+		if (margin > 6 || (nMaxColors <= 32 && m_weight < .01 && m_weight > .007)) {
 			if (nMaxColors > 4 && CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff)) {
 				auto kappa = m_saliencies[bidx] < .4f ? beta * .4f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
