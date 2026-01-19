@@ -189,6 +189,7 @@ namespace PnnLABQuant
 			quan_rt = -1;
 
 		weight = min(0.9, nMaxColors * 1.0 / maxbins);
+		isNano = weight <= .015;
 		if ((nMaxColors < 16 && weight < .0075) || weight < .001 || (weight > .0015 && weight < .0022))
 			quan_rt = 2;
 		if (weight < (isGA ? .03 : .04) && PG < 1 && PG >= coeffs[0][1]) {
@@ -350,7 +351,7 @@ namespace PnnLABQuant
 	ushort PnnLABQuantizer::nearestColorIndex(const Mat palette, const Vec4b& c0, const uint pos)
 	{
 		const auto nMaxColors = palette.rows;
-		int offset = weight > .015 ? GetArgb8888(c0) : GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
+		int offset = !isNano ? GetArgb8888(c0) : GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
 		auto got = nearestMap.find(offset);
 		if (got != nearestMap.end())
 			return got->second;
@@ -442,7 +443,7 @@ namespace PnnLABQuant
 	ushort PnnLABQuantizer::hybridColorIndex(const Mat palette, const Vec4b& c0, const uint pos)
 	{
 		const auto nMaxColors = palette.rows;
-		int offset = weight > .015 ? GetArgb8888(c0) : GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
+		int offset = !isNano ? GetArgb8888(c0) : GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
 		auto got = nearestMap.find(offset);
 		if (got != nearestMap.end())
 			return got->second;
@@ -503,7 +504,7 @@ namespace PnnLABQuant
 
 	ushort PnnLABQuantizer::closestColorIndex(const Mat palette, const Vec4b& c0, const uint pos)
 	{
-		if (PG < coeffs[0][1] && BlueNoise::TELL_BLUE_NOISE[pos & 4095] > -88)
+		if (PG < 1 && weight > .1 && BlueNoise::TELL_BLUE_NOISE[pos & 4095] > 0)
 			return hybridColorIndex(palette, c0, pos);
 
 		ushort k = 0;
@@ -513,7 +514,7 @@ namespace PnnLABQuant
 
 		const auto nMaxColors = (ushort) palette.rows;
 		vector<ushort> closest(4);
-		int offset = weight > .015 ? GetArgb8888(c0) : GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
+		int offset = !isNano ? GetArgb8888(c0) : GetArgbIndex(c0, hasSemiTransparency, hasAlpha());
 		auto got = closestMap.find(offset);
 		if (got == closestMap.end()) {
 			closest[2] = closest[3] = USHRT_MAX;
