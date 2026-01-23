@@ -377,7 +377,7 @@ namespace Peano
 		if (nMaxColors > 64 || (nMaxColors > 4 && weight > .02))
 			beta *= .4f;
 		if (nMaxColors > 64 && weight < .02)
-			beta = .2f;		
+			beta = .18f;		
 
 		DITHER_MAX = weight < .015 ? (weight > .0025) ? (uchar)25 : 16 : 9;
 		if (weight > .99) {
