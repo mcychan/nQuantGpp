@@ -124,7 +124,7 @@ namespace Peano
 					auto kappa = m_saliencies[bidx] < .6f ? beta * .15f / m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 					c2 = BlueNoise::diffuse(pixel, qPixel, kappa, strength, x, y);
 				}
-				else if (m_saliencies[bidx] < .9f)
+				else
 					c2 = BlueNoise::diffuse(pixel, qPixel, beta * .5f / m_saliencies[bidx], strength, x, y);
 			}
 			if (CIELABConvertor::U_Diff(pixel, c2) > (margin * acceptedDiff))
