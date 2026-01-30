@@ -143,10 +143,10 @@ namespace Peano
 					if (m_saliencies[bidx] < .6)
 						kappa = beta * normalDistribution(m_saliencies[bidx], m_weight < .0008 ? 2.5f : 1.75);
 					else if (nMaxColors >= 32 || CIELABConvertor::Y_Diff(c1, c2) > (beta * M_PI * acceptedDiff)) {
-						if (m_saliencies[bidx] < .9)
+						if (m_saliencies[bidx] > .15 && m_saliencies[bidx] < .9)
 							kappa = beta * (!sortedByYDiff && m_weight < .0025 ? .55f : .5f) / m_saliencies[bidx];
 						else
-							kappa = beta * normalDistribution(beta, !sortedByYDiff && m_weight < .0025 ? .55f : .5f) / m_saliencies[bidx];
+							kappa = beta * normalDistribution(m_saliencies[bidx], m_weight < .0025 ? 1.82f : 2.0f);
 					}
 				}
 
