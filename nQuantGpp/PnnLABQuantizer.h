@@ -50,9 +50,12 @@ namespace PnnLABQuant
 			PnnLABQuantizer(const PnnLABQuantizer& quantizer);
 			void clear();
 			void pnnquan(const Mat4b pixels, Mat palette, uint& nMaxColors);
-			bool IsGA() const;
+			const bool IsGA() const;
 			void GetLab(const Vec4b& pixel, CIELABConvertor::Lab& lab1);
-			bool hasAlpha() const;
+			const bool hasAlpha() const;
+			inline const double getProportional() const {
+				return proportional;
+			}
 			ushort nearestColorIndex(const Mat palette, const Vec4b& c0, const uint pos);
 			void setRatio(double ratioX, double ratioY);
 			void grabPixels(const Mat srcImg, Mat4b pixels, uint& nMaxColors, bool& hasSemiTransparency);
