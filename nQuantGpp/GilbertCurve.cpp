@@ -124,7 +124,7 @@ namespace Peano
 					auto kappa = m_saliencies[bidx] < .6f ? beta * .15f / m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 					c2 = BlueNoise::diffuse(pixel, qPixel, kappa, strength, x, y);
 				}
-				else if (nMaxColors > 16)
+				else if (nMaxColors > 16 && nMaxColors <= 32)
 					c2 = BlueNoise::diffuse(pixel, qPixel, beta * normalDistribution(m_saliencies[bidx], .5f) + beta, strength, x, y);
 				else
 					c2 = BlueNoise::diffuse(pixel, qPixel, beta * .5f / m_saliencies[bidx], strength, x, y);
