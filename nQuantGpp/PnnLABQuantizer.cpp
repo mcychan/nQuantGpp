@@ -581,29 +581,6 @@ namespace PnnLABQuant
 		return closest[idx];
 	}
 
-	bool PnnLABQuantizer::quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const bool dither)
-	{
-		auto width = pixels.cols;
-		auto height = pixels.rows;
-
-		auto NearestColorIndex = [this, nMaxColors](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
-			if (hasAlpha() || nMaxColors < 64)
-				return nearestColorIndex(palette, c, pos);
-			return closestColorIndex(palette, c, pos);
-		};
-
-		if (dither)
-			return dither_image(pixels, palette, NearestColorIndex, hasSemiTransparency, m_transparentPixelIndex, nMaxColors, qPixels);
-
-		for (int j = 0; j < height; ++j) {
-			for (int i = 0; i < width; ++i) {
-				auto& pixel = pixels(j, i);
-				qPixels(j, i) = (uchar) NearestColorIndex(palette, pixel, i + j);
-			}
-		}
-		return true;
-	}
-	
 	void PnnLABQuantizer::clear()
 	{
 		saliencies.clear();
@@ -660,7 +637,7 @@ namespace PnnLABQuant
 		auto NearestColorIndex = [this, nMaxColors](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
 			if (nMaxColors <= 4)
 				return nearestColorIndex(palette, c, pos);
-			if (IsGA() && nMaxColors < 16)
+			if (weight < .0005 && nMaxColors < 16)
 				return hybridColorIndex(palette, c, pos);
 			return closestColorIndex(palette, c, pos);
 		};
