@@ -124,7 +124,7 @@ namespace Peano
 					auto kappa = m_saliencies[bidx] < .6f ? beta * .15f / m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 					c2 = BlueNoise::diffuse(pixel, qPixel, kappa, strength, x, y);
 				}
-				else if (nMaxColors > 16 && nMaxColors <= 32)
+				else if (nMaxColors > 16 && m_weight < .005)
 					c2 = BlueNoise::diffuse(pixel, qPixel, beta * normalDistribution(m_saliencies[bidx], .5f) + beta, strength, x, y);
 				else
 					c2 = BlueNoise::diffuse(pixel, qPixel, beta * .5f / m_saliencies[bidx], strength, x, y);
@@ -154,8 +154,8 @@ namespace Peano
 				c2 = BlueNoise::diffuse(c1, qPixel, kappa, strength, x, y);
 			}
 		}
-		else if (nMaxColors > 4 && CIELABConvertor::Y_Diff(pixel, c2) > (beta * M_PI * acceptedDiff)) {
-			if (beta < .3f && (nMaxColors <= 32 || m_saliencies[bidx] < beta))
+		else if (nMaxColors > 4 && CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff)) {
+			if (beta < .4f && ((nMaxColors <= 32 && m_weight >= .005) || m_saliencies[bidx] < beta))
 				c2 = BlueNoise::diffuse(c2, qPixel, beta * normalDistribution(m_saliencies[bidx], .4f), strength, x, y);
 			else {
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
@@ -368,6 +368,8 @@ namespace Peano
 			if (nMaxColors >= 64 && (weight > .012 && weight < .0125) || (weight > .025 && weight < .03))
 				beta += .05f;
 			else if (nMaxColors > 32 && nMaxColors < 64 && weight < .015)
+				beta = .55f;
+			else if (nMaxColors > 16 && nMaxColors <= 32 && weight < .005)
 				beta = .55f;
 		}
 		else
