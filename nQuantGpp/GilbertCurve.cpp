@@ -155,7 +155,7 @@ namespace Peano
 			}
 		}
 		else if (nMaxColors > 4 && CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff)) {
-			if ((nMaxColors <= 32 && m_weight >= .004) || m_saliencies[bidx] < beta)
+			if (nMaxColors <= 32 && m_weight >= .004)
 				c2 = BlueNoise::diffuse(c2, qPixel, beta * normalDistribution(m_saliencies[bidx], .25f), strength, x, y);
 			else {
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
@@ -167,6 +167,8 @@ namespace Peano
 			Vec4b c1(b_pix, g_pix, r_pix, a_pix);
 			c2 = c1;
 		}
+		if (nMaxColors > 32 && m_saliencies[bidx] > .99f)
+			c2 = BlueNoise::diffuse(c2, qPixel, beta * normalDistribution(m_saliencies[bidx], .25f) * beta, strength, x, y);
 
 		return m_ditherFn(*m_pPalette, c2, bidx);
 	}
@@ -199,7 +201,7 @@ namespace Peano
 		Vec4b c2(b_pix, g_pix, r_pix, a_pix);
 		ushort qPixelIndex = 0;
 		if (m_saliencies != nullptr && m_dither && !sortedByYDiff && (!m_hasAlpha || pixel[3] < a_pix)) {
-			if (nMaxColors > 32 && m_saliencies[bidx] > .99f)
+			if (nMaxColors >= 256 && m_saliencies[bidx] > .99f)
 				qPixelIndex = m_ditherFn(*m_pPalette, c2, bidx);
 			else
 				qPixelIndex = ditherPixel(x, y, c2, beta);
