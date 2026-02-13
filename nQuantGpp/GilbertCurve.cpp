@@ -167,8 +167,6 @@ namespace Peano
 			Vec4b c1(b_pix, g_pix, r_pix, a_pix);
 			c2 = c1;
 		}
-		if (nMaxColors > 32 && m_saliencies[bidx] > .99f)
-			c2 = BlueNoise::diffuse(c2, qPixel, beta * normalDistribution(m_saliencies[bidx], .25f) * beta, strength, x, y);
 
 		return m_ditherFn(*m_pPalette, c2, bidx);
 	}
