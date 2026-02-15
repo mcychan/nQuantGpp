@@ -131,8 +131,8 @@ namespace Peano
 			}
 		}
 		
-		if (margin > 6 || (nMaxColors <= 32 && m_weight < .01 && m_weight > .007)) {
-			if (nMaxColors > 4 && CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff)) {
+		if (nMaxColors > 4 && CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff)) {
+			if (margin > 6 || (nMaxColors <= 32 && m_weight < .01 && m_weight > .007)) {
 				auto kappa = m_saliencies[bidx] < .4f ? beta * .4f * m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
 				if (nMaxColors > 32 && m_saliencies[bidx] < .9)
@@ -153,9 +153,7 @@ namespace Peano
 
 				c2 = BlueNoise::diffuse(c1, qPixel, kappa, strength, x, y);
 			}
-		}
-		else if (nMaxColors > 4 && CIELABConvertor::Y_Diff(pixel, c2) > (beta * acceptedDiff)) {
-			if (nMaxColors <= 32 && m_weight >= .004)
+			else if (nMaxColors <= 32 && m_weight >= .004)
 				c2 = BlueNoise::diffuse(c2, qPixel, beta * normalDistribution(m_saliencies[bidx], .25f), strength, x, y);
 			else {
 				Vec4b c1(b_pix, g_pix, r_pix, a_pix);
