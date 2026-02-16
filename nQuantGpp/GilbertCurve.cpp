@@ -140,7 +140,7 @@ namespace Peano
 				else {
 					if (m_weight >= .0015 && m_saliencies[bidx] < .6f)
 						c1 = pixel;
-					if (m_saliencies[bidx] < .6)
+					if (m_weight < .005 && m_saliencies[bidx] < .6)
 						kappa = beta * normalDistribution(m_saliencies[bidx], m_weight < .0008 ? 2.5f : 1.75);
 					else if (nMaxColors >= 32 || CIELABConvertor::Y_Diff(c1, c2) > (beta * M_PI * acceptedDiff)) {
 						auto ub = 1 - nMaxColors / 320.0;
