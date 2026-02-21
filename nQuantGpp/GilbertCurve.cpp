@@ -166,6 +166,10 @@ namespace Peano
 			Vec4b c1(b_pix, g_pix, r_pix, a_pix);
 			c2 = c1;
 		}
+		if (nMaxColors > 32 && m_saliencies[bidx] > .95) {
+			auto kappa = beta * (.75f - nMaxColors / 128.0f) * m_saliencies[bidx];
+			c2 = BlueNoise::diffuse(pixel, qPixel, kappa, strength, x, y);
+		}
 
 		return m_ditherFn(*m_pPalette, c2, bidx);
 	}
