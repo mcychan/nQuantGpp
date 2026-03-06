@@ -182,6 +182,9 @@ vector<uchar> QuantizeImage(const string& algorithm, const string& sourceFile, s
 		dest = pnnLABQuantizer.QuantizeImage(source, bytes, nMaxColors, dither);
 	}
 	else if (algorithm == "PNNLAB+") {
+		if (nMaxColors < 3)
+			return QuantizeImage("PNNLAB", sourceFile, targetDir, source, nMaxColors, dither);
+
 		PnnLABQuant::PnnLABQuantizer pnnLABQuantizer;
 		vector<shared_ptr<Mat> > sources(1, make_shared<Mat>(source));
 		PnnLABQuant::PnnLABGAQuantizer pnnLABGAQuantizer(pnnLABQuantizer, sources, nMaxColors);
