@@ -199,8 +199,8 @@ namespace Peano
 
 		Vec4b c2(b_pix, g_pix, r_pix, a_pix);
 		ushort qPixelIndex = 0;
-		if (m_saliencies != nullptr && m_dither && !sortedByYDiff && (!m_hasAlpha || abs(pixel[3] - a_pix) < (.5 * margin))) {
-			if (nMaxColors >= 256 && m_saliencies[bidx] > .99f)
+		if (m_saliencies != nullptr && m_dither && !sortedByYDiff && (!m_hasAlpha || pixel[3] < a_pix)) {
+			if ((nMaxColors >= 256 && m_saliencies[bidx] > .99f) || (m_hasAlpha && (pixel[3] - a_pix) < (.5 * margin)))
 				qPixelIndex = m_ditherFn(*m_pPalette, c2, bidx);
 			else
 				qPixelIndex = ditherPixel(x, y, c2, beta);
