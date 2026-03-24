@@ -371,25 +371,6 @@ namespace PnnQuant
 		return GetArgbIndex(c, hasSemiTransparency, m_transparentPixelIndex >= 0);
 	}
 
-	bool quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const bool dither)
-	{
-		auto width = pixels.cols;
-		auto height = pixels.rows;
-		if (dither) 
-			return dither_image(pixels, palette, nearestColorIndex, hasSemiTransparency, m_transparentPixelIndex, nMaxColors, qPixels);
-
-		DitherFn ditherFn = (m_transparentPixelIndex >= 0 || nMaxColors < 256) ? nearestColorIndex : closestColorIndex;
-		for (int j = 0; j < height; ++j) {
-			for (int i = 0; i < width; ++i) {
-				auto& pixel = pixels(j, i);
-				qPixels(j, i) = (uchar) ditherFn(palette, pixel, i + j);
-			}
-		}
-
-		BlueNoise::dither(pixels, palette, ditherFn, GetColorIndex, qPixels);
-		return true;
-	}	
-
 	Mat PnnQuantizer::QuantizeImage(const Mat srcImg, vector<uchar>& bytes, uint& nMaxColors, bool dither)
 	{
 		auto bitmapWidth = srcImg.cols;
