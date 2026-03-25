@@ -384,9 +384,13 @@ namespace Peano
 			DITHER_MAX = 25;
 		}
 
-		auto edge = m_hasAlpha ? 1 : exp(weight) + .25;
-		auto deviation = !m_hasAlpha && weight > .002 ? .25 : 1;
-		ditherMax = (m_hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : (uchar)(DITHER_MAX * (m_saliencies != nullptr ? 1 : 1.5));
+		auto edge = m_hasAlpha ? 1 : exp(weight) - .25;
+		if (sortedByYDiff)
+			ditherMax = (uchar)(DITHER_MAX / weight);
+		else {
+			auto deviation = !m_hasAlpha && weight > .0025 ? -.25 : 1;
+			ditherMax = (m_hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : (uchar)(DITHER_MAX * (saliencies != nullptr ? 2 : M_E));
+		}
 		int density = nMaxColors > 16 ? 3200 : 1500;
 		if (nMaxColors / weight > 5000 && (weight > .045 || (weight > .01 && nMaxColors < 64)))
 			ditherMax = (uchar)sqr(5 + edge);
