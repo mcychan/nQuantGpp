@@ -248,7 +248,7 @@ namespace Peano
 					unaccepted = true;
 
 				if (m_hasAlpha && m_saliencies == nullptr) {
-					if (abs(error[j]) >= (ditherMax * M_PI) || error[3] < 1)
+					if (abs(error[j]) >= (ditherMax * M_E * M_PI) || error[3] < 0)
 						error[j] = (float)tanh(error[j] / maxErr * 20) * (ditherMax - 1);
 					continue;
 				}
@@ -385,7 +385,7 @@ namespace Peano
 		}
 
 		auto edge = m_hasAlpha ? 1 : exp(weight) - .25;
-		if (m_hasAlpha || (sortedByYDiff && saliencies != nullptr))
+		if (saliencies != nullptr && (m_hasAlpha || (sortedByYDiff && weight < .03)))
 			ditherMax = (uchar)(DITHER_MAX / weight);
 		else {
 			auto deviation = !m_hasAlpha && weight > .0025 ? -.25 : 1;
