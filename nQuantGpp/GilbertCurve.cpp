@@ -387,6 +387,8 @@ namespace Peano
 		auto edge = m_hasAlpha ? 1 : exp(weight) - .25;
 		if (saliencies != nullptr && (m_hasAlpha || (sortedByYDiff && weight < .03)))
 			ditherMax = (uchar)(DITHER_MAX / weight);
+		else if (m_hasAlpha)
+			ditherMax = (uchar)(DITHER_MAX / sqrt(weight));
 		else {
 			auto deviation = !m_hasAlpha && weight > .0025 ? -.25 : 1;
 			ditherMax = (m_hasAlpha || DITHER_MAX > 9) ? (uchar)sqr(sqrt(DITHER_MAX) + edge * deviation) : (uchar)(DITHER_MAX * (saliencies != nullptr ? 2 : M_E));
