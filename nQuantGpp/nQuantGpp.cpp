@@ -16,6 +16,7 @@ namespace fs = std::filesystem;
 
 
 #include "PnnQuantizer.h"
+#include "DblGNGQuantizer.h"
 #include "NeuQuantizer.h"
 #include "WuQuantizer.h"
 #include "PnnLABQuantizer.h"
@@ -33,7 +34,7 @@ namespace fs = std::filesystem;
 
 ostream& tcout = cout;
 
-string algs[] = { "PNN", "PNNLAB", "PNNLAB+", "NEU", "WU", "EAS", "SPA", "DIV", "DL3", "MMC", "OTSU" };
+string algs[] = { "PNN", "PNNLAB", "PNNLAB+", "DBLGNG", "NEU", "WU", "EAS", "SPA", "DIV", "DL3", "MMC", "OTSU" };
 
 void PrintUsage()
 {
@@ -196,6 +197,10 @@ vector<uchar> QuantizeImage(const string& algorithm, const string& sourceFile, s
 		auto pDest = pGAq->QuantizeImage(bytesList, dither)[0];
 		dest = *pDest;
 		bytes = bytesList[0];
+	}
+	else if (algorithm == "DBLGNG") {
+		GrowingNeuralGas::DblGNGQuantizer dblGNGQuantizer;
+		dest = dblGNGQuantizer.QuantizeImage(source, bytes, nMaxColors, dither);
 	}
 	else if (algorithm == "NEU") {
 		NeuralNet::NeuQuantizer neuQuantizer;

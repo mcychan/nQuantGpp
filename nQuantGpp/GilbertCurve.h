@@ -7,5 +7,7 @@ namespace Peano
 	{
 		public:
 			static void dither(const Mat4b pixels4b, const Mat pPalette, DitherFn ditherFn, GetColorIndexFn getColorIndexFn, Mat qPixels, float* saliencies, double weight = 1.0, bool dither = true);
+
+			static void dithering(const Mat4b pixels4b, const Mat pPalette, DitherFn ditherFn, GetColorIndexFn getColorIndexFn, Mat qPixels, float* saliencies, double weight, bool dither, bool enforcedDither = true);
 	};
 }

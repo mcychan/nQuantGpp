@@ -36,7 +36,7 @@ namespace Peano
 		}
 	};
 
-	bool m_dither, m_hasAlpha, sortedByYDiff;
+	bool m_hasAlpha, m_dither, m_enforcedDither = true, sortedByYDiff;
 	uint m_width, m_height;
 	float beta;
 	double m_weight;
@@ -123,9 +123,9 @@ namespace Peano
 				auto kappa = m_saliencies[bidx] < .6f ? beta * .15f / m_saliencies[bidx] : beta * .4f / m_saliencies[bidx];
 				c2 = BlueNoise::diffuse(pixel, qPixel, kappa, strength, x, y);
 			}
-			else if (nMaxColors > 16 && m_weight < .005)
+			else if (m_enforcedDither && nMaxColors > 16 && m_weight < .005)
 				c2 = BlueNoise::diffuse(pixel, qPixel, beta * normalDistribution(m_saliencies[bidx], .5f) + beta, strength, x, y);
-			else
+			else if (m_enforcedDither)
 				c2 = BlueNoise::diffuse(pixel, qPixel, beta * .5f / m_saliencies[bidx], strength, x, y);
 		}
 		
@@ -407,5 +407,11 @@ namespace Peano
 			generate2d(0, 0, m_width, 0, 0, m_height);
 		else
 			generate2d(0, 0, 0, m_height, m_width, 0);
+	}
+	
+	void GilbertCurve::dithering(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn, GetColorIndexFn getColorIndexFn, Mat qPixels, float* saliencies, double weight, bool dither, bool enforcedDither)
+	{
+		m_enforcedDither = enforcedDither;
+		GilbertCurve::dither(pixels4b, palette, ditherFn, getColorIndexFn, qPixels, saliencies, weight, dither);
 	}
 }

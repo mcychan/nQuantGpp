@@ -74,12 +74,12 @@ void CIELABConvertor::LAB2RGB(Vec4b& pixel, const Lab& lab){
 * Conversions.
 ******************************************************************************/
 
-inline const double deg2Rad(const double deg)
+inline const float deg2Rad(const double deg)
 {
-	return deg * M_PI / 180.0;
+	return (float) (deg * M_PI / 180.0);
 }
 
-double CIELABConvertor::L_prime_div_k_L_S_L(const Lab& lab1, const Lab& lab2)
+float CIELABConvertor::L_prime_div_k_L_S_L(const Lab& lab1, const Lab& lab2)
 {
 	const auto k_L = 1.0; // kL
 	auto deltaLPrime = lab2.L - lab1.L;
@@ -88,7 +88,7 @@ double CIELABConvertor::L_prime_div_k_L_S_L(const Lab& lab1, const Lab& lab2)
 	return deltaLPrime / (k_L * S_L);
 }
 
-double CIELABConvertor::C_prime_div_k_L_S_L(const Lab& lab1, const Lab& lab2, double& a1Prime, double& a2Prime, double& CPrime1, double& CPrime2)
+float CIELABConvertor::C_prime_div_k_L_S_L(const Lab& lab1, const Lab& lab2, double& a1Prime, double& a2Prime, double& CPrime1, double& CPrime2)
 {
 	const auto k_C = 1.0, K1 = 0.045; // K1
 	const auto pow25To7 = 6103515625.0; /* pow(25, 7) */
@@ -108,7 +108,7 @@ double CIELABConvertor::C_prime_div_k_L_S_L(const Lab& lab1, const Lab& lab2, do
 	return deltaCPrime / (k_C * S_C);
 }
 
-double CIELABConvertor::H_prime_div_k_L_S_L(const Lab& lab1, const Lab& lab2, const double a1Prime, const double a2Prime, const double CPrime1, const double CPrime2, double& barCPrime, double& barhPrime)
+float CIELABConvertor::H_prime_div_k_L_S_L(const Lab& lab1, const Lab& lab2, const double a1Prime, const double a2Prime, const double CPrime1, const double CPrime2, double& barCPrime, double& barhPrime)
 {
 	const auto k_H = 1.0, K2 = 0.015; // K2
 	const auto deg360InRad = deg2Rad(360.0);
@@ -172,19 +172,19 @@ double CIELABConvertor::H_prime_div_k_L_S_L(const Lab& lab1, const Lab& lab2, co
 		(0.32 * cos((3.0 * barhPrime) + deg2Rad(6.0))) -
 		(0.20 * cos((4.0 * barhPrime) - deg2Rad(63.0)));
 	auto S_H = 1 + (K2 * barCPrime * T);
-	return deltaHPrime / (k_H * S_H);
+	return (float) (deltaHPrime / (k_H * S_H));
 }
 
-double CIELABConvertor::R_T(const double barCPrime, const double barhPrime, const double C_prime_div_k_L_S_L, const double H_prime_div_k_L_S_L)
+float CIELABConvertor::R_T(const double barCPrime, const double barhPrime, const double C_prime_div_k_L_S_L, const double H_prime_div_k_L_S_L)
 {
 	const double pow25To7 = 6103515625.0; /* pow(25, 7) */
 	auto deltaTheta = deg2Rad(30.0) * exp(-pow((barhPrime - deg2Rad(275.0)) / deg2Rad(25.0), 2.0));
 	auto R_C = 2.0 * sqrt(pow(barCPrime, 7.0) / (pow(barCPrime, 7.0) + pow25To7));
 	auto R_T = -sin(2.0 * deltaTheta) * R_C;
-	return R_T * C_prime_div_k_L_S_L * H_prime_div_k_L_S_L;
+	return (float) (R_T * C_prime_div_k_L_S_L * H_prime_div_k_L_S_L);
 }
 
-double CIELABConvertor::CIEDE2000(const Lab& lab1, const Lab& lab2)
+float CIELABConvertor::CIEDE2000(const Lab& lab1, const Lab& lab2)
 {
 	auto deltaL_prime_div_k_L_S_L = L_prime_div_k_L_S_L(lab1, lab2);
 	double a1Prime, a2Prime, CPrime1, CPrime2;
@@ -192,11 +192,10 @@ double CIELABConvertor::CIEDE2000(const Lab& lab1, const Lab& lab2)
 	double barCPrime, barhPrime;
 	auto deltaH_prime_div_k_L_S_L = H_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2, barCPrime, barhPrime);
 	auto deltaR_T = R_T(barCPrime, barhPrime, deltaC_prime_div_k_L_S_L, deltaH_prime_div_k_L_S_L);
-	return
-		pow(deltaL_prime_div_k_L_S_L, 2.0) +
+	return (float) (pow(deltaL_prime_div_k_L_S_L, 2.0) +
 		pow(deltaC_prime_div_k_L_S_L, 2.0) +
 		pow(deltaH_prime_div_k_L_S_L, 2.0) +
-		deltaR_T;
+		deltaR_T);
 }
 
 double CIELABConvertor::Y_Diff(const Vec4b& c1, const Vec4b& c2)
