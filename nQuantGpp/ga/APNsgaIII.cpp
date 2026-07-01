@@ -8,6 +8,7 @@
 
 #include "../stdafx.h"
 #include "APNsgaIII.h"
+#include "../DblGNGGAQuantizer.h"
 #include "../PnnLABGAQuantizer.h"
 
 #include <iostream>
@@ -170,4 +171,5 @@ namespace nQuantGA
 
 	// explicit instantiations
 	template class APNsgaIII<PnnLABQuant::PnnLABGAQuantizer>;
+	template class APNsgaIII<GrowingNeuralGas::DblGNGGAQuantizer>;
 }

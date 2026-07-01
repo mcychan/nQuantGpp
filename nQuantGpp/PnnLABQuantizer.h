@@ -1,6 +1,5 @@
 #pragma once
 #include "CIELABConvertor.h"
-#include <memory>
 #include <vector>
 using namespace std;
 

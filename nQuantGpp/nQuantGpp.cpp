@@ -17,6 +17,7 @@ namespace fs = std::filesystem;
 
 #include "PnnQuantizer.h"
 #include "DblGNGQuantizer.h"
+#include "DblGNGGAQuantizer.h"
 #include "NeuQuantizer.h"
 #include "WuQuantizer.h"
 #include "PnnLABQuantizer.h"
@@ -34,7 +35,7 @@ namespace fs = std::filesystem;
 
 ostream& tcout = cout;
 
-string algs[] = { "PNN", "PNNLAB", "PNNLAB+", "DBLGNG", "NEU", "WU", "EAS", "SPA", "DIV", "DL3", "MMC", "OTSU" };
+string algs[] = { "PNN", "PNNLAB", "PNNLAB+", "DBLGNG", "DBLGNG+", "NEU", "WU", "EAS", "SPA", "DIV", "DL3", "MMC", "OTSU" };
 
 void PrintUsage()
 {
@@ -201,6 +202,22 @@ vector<uchar> QuantizeImage(const string& algorithm, const string& sourceFile, s
 	else if (algorithm == "DBLGNG") {
 		GrowingNeuralGas::DblGNGQuantizer dblGNGQuantizer;
 		dest = dblGNGQuantizer.QuantizeImage(source, bytes, nMaxColors, dither);
+	}
+	else if (algorithm == "DBLGNG+") {
+		if (nMaxColors < 3)
+			return QuantizeImage("DBLGNG", sourceFile, targetDir, source, nMaxColors, dither);
+
+		GrowingNeuralGas::DblGNGQuantizer dblGNGQuantizer;
+		vector<shared_ptr<Mat> > sources(1, make_shared<Mat>(source));
+		GrowingNeuralGas::DblGNGGAQuantizer dblGNGGAQuantizer(dblGNGQuantizer, sources, nMaxColors);
+		nQuantGA::APNsgaIII alg(dblGNGGAQuantizer);
+		alg.run(9999, -numeric_limits<double>::epsilon());
+		auto pGAq = alg.getResult();
+		cout << "\n" << pGAq->getResult() << endl;
+		vector<vector<uchar> > bytesList;
+		auto pDest = pGAq->QuantizeImage(bytesList, dither)[0];
+		dest = *pDest;
+		bytes = bytesList[0];
 	}
 	else if (algorithm == "NEU") {
 		NeuralNet::NeuQuantizer neuQuantizer;
