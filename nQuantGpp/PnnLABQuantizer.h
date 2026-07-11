@@ -43,6 +43,7 @@ namespace PnnLABQuant
 			void find_nn(pnnbin* bins, int idx, bool texicab);
 			ushort closestColorIndex(const Mat palette, const Vec4b& c, const uint pos);
 			ushort hybridColorIndex(const Mat palette, const Vec4b& c, const uint pos);
+			bool quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const uint frameIndex, const bool dither);
 
 		public:
 			PnnLABQuantizer();
@@ -58,8 +59,8 @@ namespace PnnLABQuant
 			ushort nearestColorIndex(const Mat palette, const Vec4b& c0, const uint pos);
 			void setRatio(double ratioX, double ratioY);
 			void grabPixels(const Mat srcImg, Mat4b pixels, uint& nMaxColors, bool& hasSemiTransparency);
-			Mat QuantizeImageByPal(const Mat4b pixels, const Mat palette, vector<uchar>& bytes, uint& nMaxColors, bool dither = true);
-			Mat QuantizeImage(const Mat4b pixels, Mat palette, vector<uchar>& bytes, uint& nMaxColors, bool dither = true);
+			Mat QuantizeImageByPal(const Mat4b pixels, const Mat palette, vector<uchar>& bytes, uint& nMaxColors, uint frameIndex = 0, bool dither = true);
+			Mat QuantizeImage(const Mat4b pixels, Mat palette, vector<uchar>& bytes, uint& nMaxColors, uint frameIndex = 0, bool dither = true);
 			Mat QuantizeImage(const Mat srcImg, vector<uchar>& bytes, uint& nMaxColors, bool dither = true);
 	};
 }

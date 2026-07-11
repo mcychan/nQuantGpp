@@ -113,9 +113,9 @@ namespace GrowingNeuralGas
 				vector<shared_ptr<GNGNode>>& stdDevSamples, int totalEpochs);
 			void Inxbuild(Mat palette);
 
-			bool quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const bool dither);
 			ushort closestColorIndex(const Mat palette, const Vec4b& c0, const uint pos);
-			
+			bool quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const bool dither);
+
 		public:
 			const double TRANS_RATE = 1 - (512 + 101) / 768.0;
 			DblGNGQuantizer();

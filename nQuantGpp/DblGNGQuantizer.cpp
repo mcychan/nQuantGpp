@@ -719,7 +719,7 @@ namespace GrowingNeuralGas
 					return nearestColorIndex(palette, c, pos);
 				return closestColorIndex(palette, c, pos);
 				};
-			return dither_image(pixels, palette, NearestColorIndex, hasSemiTransparency, m_transparentPixelIndex, nMaxColors, qPixels);
+			return dither_image(pixels, palette, nMaxColors, NearestColorIndex, hasSemiTransparency, m_transparentPixelIndex, qPixels, saliencies, enforcedDither);
 		}
 
 		for (int j = 0; j < height; ++j) {
@@ -736,17 +736,6 @@ namespace GrowingNeuralGas
 	{
 		auto bitmapWidth = pixels4b.cols;
 		auto bitmapHeight = pixels4b.rows;
-
-		if (dither && !enforcedDither) {
-			Mat1b qPixels(bitmapHeight, bitmapWidth);
-			quantize_image(pixels4b, palette, nMaxColors, qPixels, dither);
-
-			pixelMap.clear();
-			clear();
-
-			ProcessImagePixels(bytes, palette, qPixels, hasAlpha());
-			return palette;
-		}
 
 		if (dither) {
 			auto length = (size_t) pixels4b.rows * pixels4b.cols;
@@ -767,6 +756,23 @@ namespace GrowingNeuralGas
 
 		if (enforcedDither)
 			enforcedDither = nMaxColors < 32 || nMaxColors > 64;
+
+		bool ditherByIGN = nMaxColors >= 128 && (!hasAlpha() || mDivn < .18);
+		if (isGA && nMaxColors >= 128)
+			ditherByIGN = true;
+		if ((nMaxColors < 32 && mDivn > .015 && mDivn < .032) || (nMaxColors >= 32 && nMaxColors < 64 && mDivn > .03 && mDivn < .06))
+			ditherByIGN = true;
+
+		if (dither && (ditherByIGN || !enforcedDither)) {
+			Mat1b qPixels(bitmapHeight, bitmapWidth);
+			quantize_image(pixels4b, palette, nMaxColors, qPixels, dither);
+
+			pixelMap.clear();
+			clear();
+
+			ProcessImagePixels(bytes, palette, qPixels, hasAlpha());
+			return palette;
+		}
 
 		auto GetColorIndex = [&](const Vec4b& c) -> int {
 			return GetArgbIndex(c, hasSemiTransparency, hasAlpha());

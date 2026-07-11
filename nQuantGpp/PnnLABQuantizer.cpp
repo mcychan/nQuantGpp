@@ -609,7 +609,30 @@ namespace PnnLABQuant
 		this->hasSemiTransparency = hasSemiTransparency = semiTransCount > 0;
 	}
 
-	Mat PnnLABQuantizer::QuantizeImageByPal(const Mat4b pixels4b, const Mat palette, vector<uchar>& bytes, uint& nMaxColors, bool dither)
+	bool PnnLABQuantizer::quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const uint frameIndex, const bool dither)
+	{
+		auto width = pixels.cols;
+		auto height = pixels.rows;
+		if (dither) {
+			auto NearestColorIndex = [this, nMaxColors](const Mat palette, const Vec4b& c, const uint pos) -> ushort {
+				if (nMaxColors <= 4)
+					return nearestColorIndex(palette, c, pos);
+				return closestColorIndex(palette, c, pos);
+			};
+			return dither_image(pixels, palette, nMaxColors, NearestColorIndex, hasSemiTransparency, m_transparentPixelIndex, qPixels, saliencies, true, frameIndex);
+		}
+
+		for (int j = 0; j < height; ++j) {
+			for (int i = 0; i < width; ++i) {
+				auto& pixel = pixels(j, i);
+				qPixels(j, i) = (uchar) nearestColorIndex(palette, pixel, i + j);
+			}
+		}
+
+		return true;
+	}
+
+	Mat PnnLABQuantizer::QuantizeImageByPal(const Mat4b pixels4b, const Mat palette, vector<uchar>& bytes, uint& nMaxColors, uint frameIndex, bool dither)
 	{
 		if (hasSemiTransparency)
 			weight *= -1;
@@ -645,6 +668,21 @@ namespace PnnLABQuant
 		auto bitmapWidth = pixels4b.cols;
 		auto bitmapHeight = pixels4b.rows;
 
+		bool ditherByIGN = nMaxColors >= 128 && weight >= .02 && (!hasAlpha() || weight < .18);
+		if (isGA && nMaxColors >= 128)
+			ditherByIGN = true;
+
+		if (dither && ditherByIGN) {
+			Mat1b qPixels(bitmapHeight, bitmapWidth);
+			quantize_image(pixels4b, palette, nMaxColors, qPixels, frameIndex, dither);
+
+			pixelMap.clear();
+			clear();
+
+			ProcessImagePixels(bytes, palette, qPixels, hasAlpha());
+			return palette;
+		}
+
 		if (nMaxColors > 256) {
 			Mat qPixels(bitmapHeight, bitmapWidth, palette.type());
 			Peano::GilbertCurve::dither(pixels4b, palette, NearestColorIndex, GetColorIndex, qPixels, saliencies.data(), weight, dither);
@@ -671,7 +709,7 @@ namespace PnnLABQuant
 		return palette;
 	}
 
-	Mat PnnLABQuantizer::QuantizeImage(const Mat4b pixels4b, Mat palette, vector<uchar>& bytes, uint& nMaxColors, bool dither)
+	Mat PnnLABQuantizer::QuantizeImage(const Mat4b pixels4b, Mat palette, vector<uchar>& bytes, uint& nMaxColors, uint frameIndex, bool dither)
 	{
 		if (nMaxColors <= 32)
 			PR = PG = PB = PA = 1;
@@ -697,7 +735,7 @@ namespace PnnLABQuant
 				swap(palette.at<Vec4b>(0, 0), palette.at<Vec4b>(1, 0));
 		}
 
-		return QuantizeImageByPal(pixels4b, palette, bytes, nMaxColors, dither);
+		return QuantizeImageByPal(pixels4b, palette, bytes, nMaxColors, frameIndex, dither);
 	}
 
 	Mat PnnLABQuantizer::QuantizeImage(const Mat srcImg, vector<uchar>& bytes, uint& nMaxColors, bool dither)

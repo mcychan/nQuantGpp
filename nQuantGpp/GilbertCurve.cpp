@@ -37,8 +37,9 @@ namespace Peano
 	};
 
 	bool m_hasAlpha, m_dither, m_enforcedDither = true, sortedByYDiff;
-	uint m_width, m_height;
-	float beta;
+	uint m_width, m_height, m_frameIndex = 0;
+	const float noiseDampener = 0.8f;
+	float baseSpread, beta;
 	double m_weight;
 	const Mat4b* m_pPixels4b;
 	const Mat* m_pPalette;
@@ -213,9 +214,14 @@ namespace Peano
 			if (m_saliencies != nullptr && (CIELABConvertor::Y_Diff(pixel, c2) > acceptedDiff || CIELABConvertor::U_Diff(pixel, c2) > (2 * acceptedDiff))) {
 				Vec4b qPixel;
 				GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
-				auto strength = 1 / 3.0f;
-				c2 = BlueNoise::diffuse(pixel, qPixel, 1.0f / m_saliencies[bidx], strength, x, y);
-				qPixelIndex = m_ditherFn(*m_pPalette, c2, bidx);
+
+				if (m_dither)
+					 dither_pixel(c2, *m_pPixels4b, y, x, noiseDampener, baseSpread, m_saliencies, true, m_frameIndex);
+				else {
+					auto strength = 1 / 3.0f;
+					c2 = BlueNoise::diffuse(pixel, qPixel, 1.0f / m_saliencies[bidx], strength, x, y);
+					qPixelIndex = m_ditherFn(*m_pPalette, c2, bidx);
+				}
 			}
 		}
 		else
@@ -266,9 +272,14 @@ namespace Peano
 			else if (CIELABConvertor::Y_Diff(pixel, c2) > 3 && CIELABConvertor::U_Diff(pixel, c2) > 3) {
 				Vec4b qPixel;
 				GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
-				auto strength = 1 / 3.0f;
-				c2 = BlueNoise::diffuse(pixel, qPixel, strength, strength, x, y);
-				qPixelIndex = m_ditherFn(*m_pPalette, c2, bidx);
+
+				if (m_dither)
+					 dither_pixel(c2, *m_pPixels4b, y, x, noiseDampener, baseSpread, m_saliencies, true, m_frameIndex);
+				else {
+					auto strength = 1 / 3.0f;
+					c2 = BlueNoise::diffuse(pixel, qPixel, strength, strength, x, y);
+					qPixelIndex = m_ditherFn(*m_pPalette, c2, bidx);
+				}
 			}
 
 			if (nMaxColors > 256) {
@@ -337,7 +348,7 @@ namespace Peano
 		generate2d(x + (ax - dax) + (bx2 - dbx), y + (ay - day) + (by2 - dby), -bx2, -by2, -(ax - ax2), -(ay - ay2));
 	}
 
-	void GilbertCurve::dither(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn, GetColorIndexFn getColorIndexFn, Mat qPixels, float* saliencies, double weight, bool dither)
+	void GilbertCurve::dither(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn, GetColorIndexFn getColorIndexFn, Mat qPixels, float* saliencies, double weight, uint frameIndex, bool dither)
 	{
 		m_width = pixels4b.cols;
 		m_height = pixels4b.rows;
@@ -348,6 +359,7 @@ namespace Peano
 		m_getColorIndexFn = getColorIndexFn;
 		m_hasAlpha = weight < 0;
 		m_saliencies = saliencies;
+		m_frameIndex = frameIndex;
 		m_dither = dither;
 
 		errorq.clear();
@@ -355,6 +367,8 @@ namespace Peano
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		sortedByYDiff = m_saliencies && nMaxColors >= 128 && weight >= .02 && (!m_hasAlpha || weight < .18);
 		nMaxColors = palette.cols * palette.rows;
+		baseSpread = (255.0f / cbrt(static_cast<float>(nMaxColors))) * noiseDampener;
+
 		beta = nMaxColors > 4 ? (float) (.6f - .00625f * nMaxColors) : 1;
 		if (nMaxColors > 4) {
 			auto boundary = .005 - .0000625 * nMaxColors;
