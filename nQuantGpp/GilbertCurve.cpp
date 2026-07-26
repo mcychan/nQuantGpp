@@ -414,8 +414,7 @@ namespace Peano
 			ditherMax = (uchar)sqr(5 + edge);
 		m_weights.clear();
 
-		if(!sortedByYDiff)
-			initWeights(DITHER_MAX);
+		initWeights(DITHER_MAX);
 
 		if (m_width >= m_height)
 			generate2d(0, 0, m_width, 0, 0, m_height);
