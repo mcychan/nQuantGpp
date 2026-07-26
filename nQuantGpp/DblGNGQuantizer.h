@@ -114,7 +114,7 @@ namespace GrowingNeuralGas
 			void Inxbuild(Mat palette);
 
 			ushort closestColorIndex(const Mat palette, const Vec4b& c0, const uint pos);
-			bool quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const bool dither);
+			bool quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const uint frameIndex, const bool dither);
 
 		public:
 			const double TRANS_RATE = 1 - (512 + 101) / 768.0;
@@ -129,7 +129,7 @@ namespace GrowingNeuralGas
 			void grabPixels(const Mat srcImg, Mat4b pixels, uint& nMaxColors, bool& hasSemiTransparency);
 
 			ushort nearestColorIndex(const Mat palette, const Vec4b& c0, const uint pos);
-			Mat QuantizeImageByPal(const Mat4b pixels4b, const Mat palette, vector<uchar>& bytes, uint& nMaxColors, bool dither = true);
+			Mat QuantizeImageByPal(const Mat4b pixels4b, const Mat palette, vector<uchar>& bytes, uint& nMaxColors, const uint frameIndex = 0, bool dither = true);
 			Mat QuantizeImage(const Mat4b pixels, Mat palette, vector<uchar>& bytes, uint& nMaxColors, bool dither = true);
 			Mat QuantizeImage(const Mat srcImg, vector<uchar>& bytes, uint& nMaxColors, bool dither = true);
 	};

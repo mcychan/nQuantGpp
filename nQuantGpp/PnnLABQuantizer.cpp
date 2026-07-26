@@ -619,7 +619,7 @@ namespace PnnLABQuant
 					return nearestColorIndex(palette, c, pos);
 				return closestColorIndex(palette, c, pos);
 			};
-			return dither_image(pixels, palette, nMaxColors, NearestColorIndex, hasSemiTransparency, m_transparentPixelIndex, qPixels, saliencies, true, frameIndex);
+			return BlueNoise::dither_image(pixels, palette, nMaxColors, NearestColorIndex, hasSemiTransparency, m_transparentPixelIndex, qPixels, saliencies, frameIndex);
 		}
 
 		for (int j = 0; j < height; ++j) {
@@ -668,11 +668,11 @@ namespace PnnLABQuant
 		auto bitmapWidth = pixels4b.cols;
 		auto bitmapHeight = pixels4b.rows;
 
-		bool ditherByIGN = nMaxColors >= 128 && weight >= .02 && (!hasAlpha() || weight < .18);
-		if (isGA && nMaxColors >= 128)
-			ditherByIGN = true;
+		bool fullDither = !hasAlpha() && nMaxColors >= 128 && (weight < .02 || weight > .09);
+		if (isGA && !hasAlpha() && nMaxColors >= 128)
+			fullDither = true;
 
-		if (dither && ditherByIGN) {
+		if (dither && fullDither) {
 			Mat1b qPixels(bitmapHeight, bitmapWidth);
 			quantize_image(pixels4b, palette, nMaxColors, qPixels, frameIndex, dither);
 

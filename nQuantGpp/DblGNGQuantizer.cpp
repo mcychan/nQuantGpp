@@ -709,7 +709,20 @@ namespace GrowingNeuralGas
 		this->hasSemiTransparency = hasSemiTransparency = semiTransCount > 0;
 	}
 
-	bool DblGNGQuantizer::quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const bool dither)
+	bool ditherImage(const Mat4b pixels4b, const Mat palette, const uint nMaxColors, DitherFn ditherFn,
+	const bool& hasSemiTransparency, const int& transparentPixelIndex, Mat1b qPixels,
+	const vector<float>& saliencies, uint frameIndex)
+	{
+		if (nMaxColors < 64)
+			return BlueNoise::dither_image(pixels4b, palette, nMaxColors, ditherFn,
+				hasSemiTransparency, transparentPixelIndex, qPixels,
+				frameIndex);
+		return BlueNoise::dither_image(pixels4b, palette, nMaxColors, ditherFn,
+				hasSemiTransparency, transparentPixelIndex, qPixels,
+				saliencies, frameIndex);
+	}
+
+	bool DblGNGQuantizer::quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const uint frameIndex, const bool dither)
 	{
 		auto width = pixels.cols;
 		auto height = pixels.rows;
@@ -719,7 +732,7 @@ namespace GrowingNeuralGas
 					return nearestColorIndex(palette, c, pos);
 				return closestColorIndex(palette, c, pos);
 				};
-			return dither_image(pixels, palette, nMaxColors, NearestColorIndex, hasSemiTransparency, m_transparentPixelIndex, qPixels, saliencies, enforcedDither);
+			return ditherImage(pixels, palette, nMaxColors, NearestColorIndex, hasSemiTransparency, m_transparentPixelIndex, qPixels, saliencies, frameIndex);
 		}
 
 		for (int j = 0; j < height; ++j) {
@@ -732,7 +745,7 @@ namespace GrowingNeuralGas
 		return true;
 	}
 
-	Mat DblGNGQuantizer::QuantizeImageByPal(const Mat4b pixels4b, const Mat palette, vector<uchar>& bytes, uint& nMaxColors, bool dither)
+	Mat DblGNGQuantizer::QuantizeImageByPal(const Mat4b pixels4b, const Mat palette, vector<uchar>& bytes, uint& nMaxColors, const uint frameIndex, bool dither)
 	{
 		auto bitmapWidth = pixels4b.cols;
 		auto bitmapHeight = pixels4b.rows;
@@ -757,15 +770,15 @@ namespace GrowingNeuralGas
 		if (enforcedDither)
 			enforcedDither = nMaxColors < 32 || nMaxColors > 64;
 
-		bool ditherByIGN = !hasAlpha() && nMaxColors >= 128 && mDivn < .18;
+		bool fullDither = !hasAlpha() && nMaxColors >= 128 && mDivn < .18;
 		if (isGA && !hasAlpha() && nMaxColors >= 128)
-			ditherByIGN = true;
+			fullDither = true;
 		if ((nMaxColors < 32 && mDivn > .015 && mDivn < .032) || (nMaxColors >= 32 && nMaxColors < 64 && mDivn > .03 && mDivn < .06))
-			ditherByIGN = true;
+			fullDither = true;
 
-		if (dither && (ditherByIGN || !enforcedDither)) {
+		if (dither && (fullDither || !enforcedDither)) {
 			Mat1b qPixels(bitmapHeight, bitmapWidth);
-			quantize_image(pixels4b, palette, nMaxColors, qPixels, dither);
+			quantize_image(pixels4b, palette, nMaxColors, qPixels, frameIndex, dither);
 
 			pixelMap.clear();
 			clear();

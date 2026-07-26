@@ -14,14 +14,6 @@ bool dither_image(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn, co
 
 bool dithering_image(const Mat4b pixels4b, const Mat palette, DitherFn ditherFn, const bool& hasSemiTransparency, const int& transparentPixelIndex, const uint nMaxColors, Mat qPixels);
 
-void dither_pixel(Vec4b& c, const Mat4b pixels4b, const int row, const int col, 
-	const float noiseDampener, const float baseSpread,
-	const float* saliencies, bool enforcedDither, unsigned int frameIndex = 0);
-
-bool dither_image(const Mat4b pixels4b, const Mat palette, const uint nMaxColors, DitherFn ditherFn,
-	const bool& hasSemiTransparency, const int& transparentPixelIndex, Mat1b qPixels,
-	const vector<float>& saliencies, bool enforcedDither, uint frameIndex = 0);
-
 void ProcessImagePixels(vector<uchar>& bytes, const Mat qPixels, const bool& hasTransparent);
 
 void ProcessImagePixels(vector<uchar>& bytes, const Mat palette, const Mat1b qPixels, const bool& hasTransparent);

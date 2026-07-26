@@ -216,7 +216,7 @@ namespace Peano
 				GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
 
 				if (m_dither)
-					 dither_pixel(c2, *m_pPixels4b, y, x, noiseDampener, baseSpread, m_saliencies, true, m_frameIndex);
+					 BlueNoise::dither_pixel(c2, *m_pPixels4b, y, x, noiseDampener, baseSpread, m_saliencies, m_frameIndex);
 				else {
 					auto strength = 1 / 3.0f;
 					c2 = BlueNoise::diffuse(pixel, qPixel, 1.0f / m_saliencies[bidx], strength, x, y);
@@ -274,7 +274,7 @@ namespace Peano
 				GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
 
 				if (m_dither)
-					 dither_pixel(c2, *m_pPixels4b, y, x, noiseDampener, baseSpread, m_saliencies, true, m_frameIndex);
+					BlueNoise::dither_pixel(c2, *m_pPixels4b, y, x, noiseDampener, baseSpread, m_saliencies, m_frameIndex);
 				else {
 					auto strength = 1 / 3.0f;
 					c2 = BlueNoise::diffuse(pixel, qPixel, strength, strength, x, y);

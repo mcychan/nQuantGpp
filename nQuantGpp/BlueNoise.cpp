@@ -6,10 +6,12 @@
 #include "stdafx.h"
 #include "BlueNoise.h"
 
-#include <memory>
+#include <algorithm>
 
 namespace BlueNoise
 {
+	static constexpr int BLUE_NOISE_SIZE = 64;
+
 	// Reference mask from: https://tellusim.com/download/noise/64x64_l64_s16.png
 	// Made from: https://github.com/Tellusim/BlueNoise
 	const char TELL_BLUE_NOISE[] = {
@@ -215,5 +217,198 @@ namespace BlueNoise
 				qPixelIndex = ditherFn(palette, c1, bidx);
 			}
 		}
-    }
+	}
+
+	// Standard Interleaved Gradient Noise formula by Jorge Jimenez with a temporal frame seed
+	inline float GetTemporalInterleavedGradientNoise(int x, int y, unsigned int frameIndex)
+	{
+		// Wrap the frame index to prevent precision loss in floating-point math over time
+		unsigned int frameModulo = frameIndex % 8;
+
+		// Shift coordinates using fractional steps derived from low-discrepancy sequences
+		auto temporalOffsetX = float(frameModulo) * 0.75487767f;
+		auto temporalOffsetY = float(frameModulo) * 0.56984029f;
+
+		auto f = 0.06711056f * (float(x) + temporalOffsetX) + 0.00583715f * (float(y) + temporalOffsetY);
+
+		return fmod(52.9829189f * fmod(f, 1.0f), 1.0f);
+	}
+
+	// Convert signed-byte blue-noise value (-128 … 127) ? float [0, 1]
+	// (the +0.5 / 256 form is the conventional unbiased mapping)
+	inline float BlueNoiseByteToFloat(char v)
+	{
+		return (static_cast<unsigned char>(v) + 0.5f) * (1.0f / 256.0f);
+	}
+
+	// Optional: convert directly to a centered value in [-0.5, 0.5]
+	// (useful if you want to skip the “- 0.5f” later)
+	inline float BlueNoiseByteToCentered(char v)
+	{
+		return (static_cast<unsigned char>(v) + 0.5f) * (1.0f / 256.0f) - 0.5f;
+		// almost identical alternative:  return static_cast<float>(v) * (1.0f / 255.0f);
+	}
+
+	inline float GetTemporalBlueNoise(int x, int y, unsigned int frameIndex)
+	{
+		// simple temporal offset (replace with a better 3-D sequence if you have one)
+		const int ox = (x + static_cast<int>(frameIndex * 13u)) & (BLUE_NOISE_SIZE - 1);
+		const int oy = (y + static_cast<int>(frameIndex * 29u)) & (BLUE_NOISE_SIZE - 1);
+		const size_t index = oy * BLUE_NOISE_SIZE + ox;
+		const char raw = (index < sizeof(TELL_BLUE_NOISE)) ? TELL_BLUE_NOISE[index] : TELL_BLUE_NOISE[index & 4095];
+		return BlueNoiseByteToFloat(raw);               // returns [0,1]
+	}
+
+	inline float GetLuminanceFromSaliency(float saliency, uchar alpha, float saliencyBase = 0.1f)
+	{
+		// Avoid division by zero for fully transparent pixels
+		if (alpha == 0) {
+			return 0.0f;
+		}
+
+		auto alphaNormalized = static_cast<float>(alpha) / 255.0f;
+		auto scale = (1.0f - saliencyBase) * alphaNormalized;
+
+		if (scale <= 0.0f) {
+			return 0.0f;
+		}
+
+		// Invert the formula to isolate L
+		auto L = (saliency - saliencyBase) / scale;
+
+		// Clamp L to the valid CIELAB Lightness range [0.0, 1.0]
+		return clamp(L, 0.0f, 1.0f);
+	}
+
+	void dither_pixel_IGN(Vec4b& pixel, const Mat4b pixels4b, const int row, const int col, 
+		const float noiseDampener, const float baseSpread,
+		unsigned int frameIndex)
+	{
+		int x = col;
+		int y = row;
+		const int pixelIndex = x + y * pixels4b.cols;
+
+		// Generate centered noise [-0.5, 0.5]
+		auto noise = GetTemporalInterleavedGradientNoise(x, y, frameIndex) - 0.5f;
+
+		// Compute noise offset
+		auto offset = noise * baseSpread;
+
+		auto c = pixels4b(y, x);
+		// Apply noise and clamp safely to RGB limits
+		int r = clamp(static_cast<int>(c[2] + offset), 0, UCHAR_MAX);
+		int g = clamp(static_cast<int>(c[1] + offset), 0, UCHAR_MAX);
+		int b = clamp(static_cast<int>(c[0] + offset), 0, UCHAR_MAX);
+		int a = c[3];
+
+		pixel = Vec4b(b, g, r, a);
+	}
+
+	void dither_pixel(Vec4b& pixel, const Mat4b pixels4b, const int row, const int col, 
+		const float noiseDampener, const float baseSpread,
+		const float* saliencies, unsigned int frameIndex)
+	{
+		int x = col;
+		int y = row;
+		const int pixelIndex = x + y * pixels4b.cols;
+		auto c = pixels4b(y, x);
+
+		// Compute noise offset
+		auto weight = (saliencies != nullptr) ? saliencies[pixelIndex] : 1.0f;
+
+		auto luminance = GetLuminanceFromSaliency(weight, c[3]);
+		// Taper noise to 0 when luminance approaches 1.0 (pure white sky)
+		// Smoothstep / quadratic decay in the top 15% brightness range [0.85, 1.0]
+		auto highlightDampener = 1.0f;
+		if (luminance > 0.85f) {
+			// Smoothly drop from 1.0 (at 0.85) to 0.0 (at 1.0)
+			auto t = (luminance - 0.85f) / 0.15f;
+			highlightDampener = (1.0f - t) * (1.0f - t);
+		}
+
+		// Blue-noise sample centered to [-0.5, 0.5]
+		const auto noise = GetTemporalBlueNoise(x, y, frameIndex) - 0.5f;		
+		auto offset = noise * baseSpread * weight * highlightDampener;
+		
+		// Apply noise and clamp safely to RGB limits
+		int r = clamp(static_cast<int>(c[2] + offset), 0, UCHAR_MAX);
+		int g = clamp(static_cast<int>(c[1] + offset), 0, UCHAR_MAX);
+		int b = clamp(static_cast<int>(c[0] + offset), 0, UCHAR_MAX);
+		int a = c[3];
+
+		pixel = Vec4b(b, g, r, a);
+	}
+
+	bool dither_image(const Mat4b pixels4b, const Mat palette, const uint nMaxColors, DitherFn ditherFn,
+		const bool& hasSemiTransparency, const int& transparentPixelIndex, Mat1b qPixels,
+		const vector<float>& saliencies, uint frameIndex)
+	{
+		// Introduce a tuning multiplier (e.g., 0.5f to 0.8f) to reduce overall noise amplitude
+		const float noiseDampener = 0.8f;
+		const float baseSpread = (255.0f / cbrt(static_cast<float>(nMaxColors))) * noiseDampener;
+
+		int pixelIndex = 0;
+		for (int y = 0; y < pixels4b.rows; ++y)
+		{
+			for (int x = 0; x < pixels4b.cols; ++x)
+			{
+				Vec4b pixel;
+				GrabPixel(pixel, pixels4b, y, x);
+				auto pixelBlue = pixel[0];
+				auto pixelGreen = pixel[1];
+				auto pixelRed = pixel[2];
+				auto pixelAlpha = pixel[3];
+
+				auto& qPixel = qPixels(y, x);
+				// Handle pure transparency early
+				if (transparentPixelIndex >= 0 && pixelAlpha == 0) {
+					qPixel = static_cast<uchar>(transparentPixelIndex);
+					continue;
+				}
+
+				Vec4b noisyArgb;
+				dither_pixel(noisyArgb, pixels4b, y, x, noiseDampener, baseSpread,
+					saliencies.data(), frameIndex);
+				qPixel = ditherFn(palette, noisyArgb, y + x);
+			}
+		}
+
+		return true;
+	}
+
+	bool dither_image(const Mat4b pixels4b, const Mat palette, const uint nMaxColors, DitherFn ditherFn,
+		const bool& hasSemiTransparency, const int& transparentPixelIndex, Mat1b qPixels, uint frameIndex)
+	{
+		// Introduce a tuning multiplier (e.g., 0.5f to 0.8f) to reduce overall noise amplitude
+		const float noiseDampener = 0.8f;
+		const float baseSpread = (255.0f / cbrt(static_cast<float>(nMaxColors))) * noiseDampener;
+
+		int pixelIndex = 0;
+		for (int y = 0; y < pixels4b.rows; ++y)
+		{
+			for (int x = 0; x < pixels4b.cols; ++x)
+			{
+				Vec4b pixel;
+				GrabPixel(pixel, pixels4b, y, x);
+				auto pixelBlue = pixel[0];
+				auto pixelGreen = pixel[1];
+				auto pixelRed = pixel[2];
+				auto pixelAlpha = pixel[3];
+
+				auto& qPixel = qPixels(y, x);
+				// Handle pure transparency early
+				if (transparentPixelIndex >= 0 && pixelAlpha == 0) {
+					qPixel = static_cast<uchar>(transparentPixelIndex);
+					continue;
+				}
+
+				Vec4b noisyArgb;
+				dither_pixel_IGN(noisyArgb, pixels4b, y, x, noiseDampener, baseSpread, frameIndex);
+				qPixel = ditherFn(palette, noisyArgb, y + x);
+			}
+		}
+
+		return true;
+	}
+
 }
