@@ -14,9 +14,8 @@ namespace BlueNoise
 	const float* saliencies, unsigned int frameIndex = 0);
 
 	bool dither_image(const Mat4b pixels4b, const Mat palette, const uint nMaxColors, DitherFn ditherFn,
-	const bool& hasSemiTransparency, const int& transparentPixelIndex, Mat1b qPixels,
-	const vector<float>& saliencies, uint frameIndex = 0);
+	Mat1b qPixels, const vector<float>& saliencies, uint frameIndex = 0);
 	
 	bool dither_image(const Mat4b pixels4b, const Mat palette, const uint nMaxColors, DitherFn ditherFn,
-	const bool& hasSemiTransparency, const int& transparentPixelIndex, Mat1b qPixels, uint frameIndex = 0);
+	Mat1b qPixels, uint frameIndex = 0);
 }

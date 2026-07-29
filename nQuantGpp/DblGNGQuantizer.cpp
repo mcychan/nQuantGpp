@@ -710,16 +710,13 @@ namespace GrowingNeuralGas
 	}
 
 	bool ditherImage(const Mat4b pixels4b, const Mat palette, const uint nMaxColors, DitherFn ditherFn,
-	const bool& hasSemiTransparency, const int& transparentPixelIndex, Mat1b qPixels,
-	const vector<float>& saliencies, uint frameIndex)
+	Mat1b qPixels, const vector<float>& saliencies, uint frameIndex)
 	{
 		if (nMaxColors < 64)
 			return BlueNoise::dither_image(pixels4b, palette, nMaxColors, ditherFn,
-				hasSemiTransparency, transparentPixelIndex, qPixels,
-				frameIndex);
+				qPixels, frameIndex);
 		return BlueNoise::dither_image(pixels4b, palette, nMaxColors, ditherFn,
-				hasSemiTransparency, transparentPixelIndex, qPixels,
-				saliencies, frameIndex);
+				qPixels, saliencies, frameIndex);
 	}
 
 	bool DblGNGQuantizer::quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const uint frameIndex, const bool dither)
@@ -732,7 +729,7 @@ namespace GrowingNeuralGas
 					return nearestColorIndex(palette, c, pos);
 				return closestColorIndex(palette, c, pos);
 				};
-			return ditherImage(pixels, palette, nMaxColors, NearestColorIndex, hasSemiTransparency, m_transparentPixelIndex, qPixels, saliencies, frameIndex);
+			return ditherImage(pixels, palette, nMaxColors, NearestColorIndex, qPixels, saliencies, frameIndex);
 		}
 
 		for (int j = 0; j < height; ++j) {

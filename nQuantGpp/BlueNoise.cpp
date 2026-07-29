@@ -1,7 +1,7 @@
 /**
  * Alan Wolfe, Nathan Morrical, Tomas Akenine-Möller, Ravi Ramamoorthi:
  * Scalar Spatiotemporal Blue Noise Masks. CoRR abs/2112.09629 (2021)
- * Copyright (c) 2022 - 2023 Miller Cy Chan */
+ * Copyright (c) 2022 - 2026 Miller Cy Chan */
 
 #include "stdafx.h"
 #include "BlueNoise.h"
@@ -308,8 +308,8 @@ namespace BlueNoise
 		const float noiseDampener, const float baseSpread,
 		const float* saliencies, unsigned int frameIndex)
 	{
-		int x = col;
-		int y = row;
+		const int x = col;
+		const int y = row;
 		const int pixelIndex = x + y * pixels4b.cols;
 		auto c = pixels4b(y, x);
 
@@ -340,36 +340,21 @@ namespace BlueNoise
 	}
 
 	bool dither_image(const Mat4b pixels4b, const Mat palette, const uint nMaxColors, DitherFn ditherFn,
-		const bool& hasSemiTransparency, const int& transparentPixelIndex, Mat1b qPixels,
-		const vector<float>& saliencies, uint frameIndex)
+		Mat1b qPixels, const vector<float>& saliencies, uint frameIndex)
 	{
 		// Introduce a tuning multiplier (e.g., 0.5f to 0.8f) to reduce overall noise amplitude
-		const float noiseDampener = 0.8f;
-		const float baseSpread = (255.0f / cbrt(static_cast<float>(nMaxColors))) * noiseDampener;
+		const auto noiseDampener = 0.8f;
+		const auto baseSpread = (255.0f / cbrt(static_cast<float>(nMaxColors))) * noiseDampener;
 
 		int pixelIndex = 0;
 		for (int y = 0; y < pixels4b.rows; ++y)
 		{
 			for (int x = 0; x < pixels4b.cols; ++x)
 			{
-				Vec4b pixel;
-				GrabPixel(pixel, pixels4b, y, x);
-				auto pixelBlue = pixel[0];
-				auto pixelGreen = pixel[1];
-				auto pixelRed = pixel[2];
-				auto pixelAlpha = pixel[3];
-
-				auto& qPixel = qPixels(y, x);
-				// Handle pure transparency early
-				if (transparentPixelIndex >= 0 && pixelAlpha == 0) {
-					qPixel = static_cast<uchar>(transparentPixelIndex);
-					continue;
-				}
-
 				Vec4b noisyArgb;
 				dither_pixel(noisyArgb, pixels4b, y, x, noiseDampener, baseSpread,
 					saliencies.data(), frameIndex);
-				qPixel = ditherFn(palette, noisyArgb, y + x);
+				qPixels(y, x) = ditherFn(palette, noisyArgb, y + x);
 			}
 		}
 
@@ -377,34 +362,20 @@ namespace BlueNoise
 	}
 
 	bool dither_image(const Mat4b pixels4b, const Mat palette, const uint nMaxColors, DitherFn ditherFn,
-		const bool& hasSemiTransparency, const int& transparentPixelIndex, Mat1b qPixels, uint frameIndex)
+		Mat1b qPixels, uint frameIndex)
 	{
 		// Introduce a tuning multiplier (e.g., 0.5f to 0.8f) to reduce overall noise amplitude
-		const float noiseDampener = 0.8f;
-		const float baseSpread = (255.0f / cbrt(static_cast<float>(nMaxColors))) * noiseDampener;
+		const auto noiseDampener = 0.8f;
+		const auto baseSpread = (255.0f / cbrt(static_cast<float>(nMaxColors))) * noiseDampener;
 
 		int pixelIndex = 0;
 		for (int y = 0; y < pixels4b.rows; ++y)
 		{
 			for (int x = 0; x < pixels4b.cols; ++x)
 			{
-				Vec4b pixel;
-				GrabPixel(pixel, pixels4b, y, x);
-				auto pixelBlue = pixel[0];
-				auto pixelGreen = pixel[1];
-				auto pixelRed = pixel[2];
-				auto pixelAlpha = pixel[3];
-
-				auto& qPixel = qPixels(y, x);
-				// Handle pure transparency early
-				if (transparentPixelIndex >= 0 && pixelAlpha == 0) {
-					qPixel = static_cast<uchar>(transparentPixelIndex);
-					continue;
-				}
-
 				Vec4b noisyArgb;
 				dither_pixel_IGN(noisyArgb, pixels4b, y, x, noiseDampener, baseSpread, frameIndex);
-				qPixel = ditherFn(palette, noisyArgb, y + x);
+				qPixels(y, x) = ditherFn(palette, noisyArgb, y + x);
 			}
 		}
 
