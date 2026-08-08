@@ -9,9 +9,8 @@ namespace BlueNoise
 
 	void dither(const Mat4b pPixels4b, const Mat pPalette, DitherFn ditherFn, GetColorIndexFn getColorIndexFn, Mat1b qPixels, const float weight = 1.0f);
 	
-	void dither_pixel(Vec4b& c, const Mat4b pixels4b, const int row, const int col, 
-	const float noiseDampener, const float baseSpread,
-	const float* saliencies, unsigned int frameIndex = 0);
+	Vec4b dither_pixel(const Vec4b& pixel, const float saliency, const int x, const int y,
+	const float noiseDampener, const float baseSpread, unsigned int frameIndex = 0);
 
 	bool dither_image(const Mat4b pixels4b, const Mat palette, const uint nMaxColors, DitherFn ditherFn,
 	Mat1b qPixels, const vector<float>& saliencies, uint frameIndex = 0);

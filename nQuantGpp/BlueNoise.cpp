@@ -280,43 +280,28 @@ namespace BlueNoise
 		return clamp(L, 0.0f, 1.0f);
 	}
 
-	void dither_pixel_IGN(Vec4b& pixel, const Mat4b pixels4b, const int row, const int col, 
-		const float noiseDampener, const float baseSpread,
-		unsigned int frameIndex)
+	Vec4b dither_pixel_IGN(const Vec4b& pixel, const int x, const int y,
+		const float noiseDampener, const float baseSpread, unsigned int frameIndex)
 	{
-		int x = col;
-		int y = row;
-		const int pixelIndex = x + y * pixels4b.cols;
-
 		// Generate centered noise [-0.5, 0.5]
 		auto noise = GetTemporalInterleavedGradientNoise(x, y, frameIndex) - 0.5f;
 
 		// Compute noise offset
 		auto offset = noise * baseSpread;
 
-		auto c = pixels4b(y, x);
 		// Apply noise and clamp safely to RGB limits
-		int r = clamp(static_cast<int>(c[2] + offset), 0, UCHAR_MAX);
-		int g = clamp(static_cast<int>(c[1] + offset), 0, UCHAR_MAX);
-		int b = clamp(static_cast<int>(c[0] + offset), 0, UCHAR_MAX);
-		int a = c[3];
+		int r = clamp(static_cast<int>(pixel[2] + offset), 0, UCHAR_MAX);
+		int g = clamp(static_cast<int>(pixel[1] + offset), 0, UCHAR_MAX);
+		int b = clamp(static_cast<int>(pixel[0] + offset), 0, UCHAR_MAX);
+		int a = pixel[3];
 
-		pixel = Vec4b(b, g, r, a);
+		return Vec4b(b, g, r, a);
 	}
 
-	void dither_pixel(Vec4b& pixel, const Mat4b pixels4b, const int row, const int col, 
-		const float noiseDampener, const float baseSpread,
-		const float* saliencies, unsigned int frameIndex)
+	Vec4b dither_pixel(const Vec4b& pixel, const float saliency, const int x, const int y,
+		const float noiseDampener, const float baseSpread, unsigned int frameIndex)
 	{
-		const int x = col;
-		const int y = row;
-		const int pixelIndex = x + y * pixels4b.cols;
-		auto c = pixels4b(y, x);
-
-		// Compute noise offset
-		auto weight = (saliencies != nullptr) ? saliencies[pixelIndex] : 1.0f;
-
-		auto luminance = GetLuminanceFromSaliency(weight, c[3]);
+		auto luminance = GetLuminanceFromSaliency(saliency, pixel[3]);
 		// Taper noise to 0 when luminance approaches 1.0 (pure white sky)
 		// Smoothstep / quadratic decay in the top 15% brightness range [0.85, 1.0]
 		auto highlightDampener = 1.0f;
@@ -328,15 +313,15 @@ namespace BlueNoise
 
 		// Blue-noise sample centered to [-0.5, 0.5]
 		const auto noise = GetTemporalBlueNoise(x, y, frameIndex) - 0.5f;		
-		auto offset = noise * baseSpread * weight * highlightDampener;
+		auto offset = noise * baseSpread * saliency * highlightDampener;
 		
 		// Apply noise and clamp safely to RGB limits
-		int r = clamp(static_cast<int>(c[2] + offset), 0, UCHAR_MAX);
-		int g = clamp(static_cast<int>(c[1] + offset), 0, UCHAR_MAX);
-		int b = clamp(static_cast<int>(c[0] + offset), 0, UCHAR_MAX);
-		int a = c[3];
+		int r = clamp(static_cast<int>(pixel[2] + offset), 0, UCHAR_MAX);
+		int g = clamp(static_cast<int>(pixel[1] + offset), 0, UCHAR_MAX);
+		int b = clamp(static_cast<int>(pixel[0] + offset), 0, UCHAR_MAX);
+		int a = pixel[3];
 
-		pixel = Vec4b(b, g, r, a);
+		return Vec4b(b, g, r, a);
 	}
 
 	bool dither_image(const Mat4b pixels4b, const Mat palette, const uint nMaxColors, DitherFn ditherFn,
@@ -346,14 +331,14 @@ namespace BlueNoise
 		const auto noiseDampener = 0.8f;
 		const auto baseSpread = (255.0f / cbrt(static_cast<float>(nMaxColors))) * noiseDampener;
 
-		int pixelIndex = 0;
+		auto width = pixels4b.cols;
 		for (int y = 0; y < pixels4b.rows; ++y)
 		{
 			for (int x = 0; x < pixels4b.cols; ++x)
 			{
-				Vec4b noisyArgb;
-				dither_pixel(noisyArgb, pixels4b, y, x, noiseDampener, baseSpread,
-					saliencies.data(), frameIndex);
+				uint bidx = x + y * width;
+				auto& pixel = pixels4b(y, x);
+				auto noisyArgb = dither_pixel(pixel, !saliencies.empty() ? saliencies[bidx] : 1.0f, x, y, noiseDampener, baseSpread, frameIndex);
 				qPixels(y, x) = ditherFn(palette, noisyArgb, y + x);
 			}
 		}
@@ -368,13 +353,14 @@ namespace BlueNoise
 		const auto noiseDampener = 0.8f;
 		const auto baseSpread = (255.0f / cbrt(static_cast<float>(nMaxColors))) * noiseDampener;
 
-		int pixelIndex = 0;
+		auto width = pixels4b.cols;
 		for (int y = 0; y < pixels4b.rows; ++y)
 		{
 			for (int x = 0; x < pixels4b.cols; ++x)
 			{
-				Vec4b noisyArgb;
-				dither_pixel_IGN(noisyArgb, pixels4b, y, x, noiseDampener, baseSpread, frameIndex);
+				uint bidx = x + y * width;
+				auto& pixel = pixels4b(y, x);
+				auto noisyArgb = dither_pixel_IGN(pixel, x, y, noiseDampener, baseSpread, frameIndex);
 				qPixels(y, x) = ditherFn(palette, noisyArgb, y + x);
 			}
 		}
