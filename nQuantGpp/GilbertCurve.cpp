@@ -215,7 +215,7 @@ namespace Peano
 				Vec4b qPixel;
 				GrabPixel(qPixel, *m_pPalette, qPixelIndex, 0);
 
-				if (m_dither)
+				if (m_dither && !(m_hasAlpha && nMaxColors < 24))
 					 c2 = BlueNoise::dither_pixel(pixel, (m_saliencies != nullptr) ? m_saliencies[bidx] : 1.0f, x, y, noiseDampener, baseSpread, m_frameIndex);
 				else {
 					auto strength = 1 / 3.0f;
