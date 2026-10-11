@@ -136,7 +136,7 @@ namespace PnnLABQuant
 		return[](const float& cnt) { return cnt; };
 	}
 
-	void PnnLABQuantizer::pnnquan(const Mat4b pixels, Mat palette, uint& nMaxColors)
+	vector<PnnLABQuantizer::pnnbin> PnnLABQuantizer::Getbins(const Mat4b pixels, Mat palette, int& maxbins, uint& nMaxColors)
 	{
 		short quan_rt = 1;
 		vector<pnnbin> bins(USHRT_MAX + 1);
@@ -169,8 +169,6 @@ namespace PnnLABQuant
 		}
 
 		/* Cluster nonempty bins at one end of array */
-		int maxbins = 0;
-
 		for (int i = 0; i < bins.size(); ++i) {
 			if (bins[i].cnt <= 0.0)
 				continue;
@@ -222,7 +220,8 @@ namespace PnnLABQuant
 				++k;
 			}
 
-			return;
+			bins.clear();
+			return bins;
 		}
 
 		auto quanFn = getQuanFn(nMaxColors, quan_rt);
@@ -346,6 +345,13 @@ namespace PnnLABQuant
 
 			i = bins[i].fw;
 		}
+		return bins;
+	}
+
+	void PnnLABQuantizer::pnnquan(const Mat4b pixels, Mat palette, uint& nMaxColors)
+	{
+		int maxbins = 0;
+		Getbins(pixels, palette, maxbins, nMaxColors);
 	}
 
 	ushort PnnLABQuantizer::nearestColorIndex(const Mat palette, const Vec4b& c0, const uint pos)

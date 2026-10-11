@@ -154,6 +154,7 @@
     <ClInclude Include="DblGNGQuantizer.h" />
     <ClInclude Include="DivQuantizer.h" />
     <ClInclude Include="Dl3Quantizer.h" />
+    <ClInclude Include="DwPnnKhmLABQuantizer.h" />
     <ClInclude Include="EdgeAwareSQuantizer.h" />
     <ClInclude Include="ga\APNsgaIII.h" />
     <ClInclude Include="ga\Chromosome.h" />
@@ -178,6 +179,7 @@
     <ClCompile Include="DblGNGQuantizer.cpp" />
     <ClCompile Include="DivQuantizer.cpp" />
     <ClCompile Include="Dl3Quantizer.cpp" />
+    <ClCompile Include="DwPnnKhmLABQuantizer.cpp" />
     <ClCompile Include="EdgeAwareSQuantizer.cpp" />
     <ClCompile Include="ga\APNsgaIII.cpp" />
     <ClCompile Include="ga\NsgaIII.cpp" />

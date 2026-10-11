@@ -31,25 +31,27 @@ namespace PnnLABQuant
 			const double TRANS_RATE = 1 - (512 + 101) / 768.0;
 			unordered_map<ARGB, CIELABConvertor::Lab> pixelMap;
 			unordered_map<int, vector<ushort> > closestMap;
-			unordered_map<int, ushort> nearestMap;
-			vector<float> saliencies;
+			unordered_map<int, ushort> nearestMap;			
+			
+			ushort closestColorIndex(const Mat palette, const Vec4b& c, const uint pos);
+			ushort hybridColorIndex(const Mat palette, const Vec4b& c, const uint pos);
+			bool quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const uint frameIndex, const bool dither);
 
+		protected:
 			struct pnnbin {
 				float ac = 0, Lc = 0, Ac = 0, Bc = 0, err = 0;
 				float cnt = 0;
 				int nn = 0, fw = 0, bk = 0, tm = 0, mtm = 0;
 			};
-
+			vector<float> saliencies;
 			void find_nn(pnnbin* bins, int idx, bool texicab);
-			ushort closestColorIndex(const Mat palette, const Vec4b& c, const uint pos);
-			ushort hybridColorIndex(const Mat palette, const Vec4b& c, const uint pos);
-			bool quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const uint frameIndex, const bool dither);
+			vector<pnnbin> Getbins(const Mat4b pixels, Mat palette, int& maxbins, uint& nMaxColors);
 
 		public:
 			PnnLABQuantizer();
 			PnnLABQuantizer(const PnnLABQuantizer& quantizer);
 			void clear();
-			void pnnquan(const Mat4b pixels, Mat palette, uint& nMaxColors);
+			virtual void pnnquan(const Mat4b pixels, Mat palette, uint& nMaxColors);
 			const bool IsGA() const;
 			void GetLab(const Vec4b& pixel, CIELABConvertor::Lab& lab1);
 			const bool hasAlpha() const;
