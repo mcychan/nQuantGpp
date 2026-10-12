@@ -36,7 +36,7 @@ namespace PnnLABQuant
 		vector<float> newAlpha(k, 0.0f);
 		vector<float> weightSum(k, 0.0f);
 
-		const auto p = 2.0f; // K-harmonic means power parameter
+		const auto p = hasSemiTransparency ? 2.5f : 3.0f; // K-harmonic means power parameter
 		auto numUniqueLabs = uniqueLabs.size();
 
 		for (int iter = 0; iter < maxIterations; ++iter) {
