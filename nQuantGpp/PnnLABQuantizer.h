@@ -24,7 +24,6 @@ namespace PnnLABQuant
 	class PnnLABQuantizer
 	{
 		private:
-			bool hasSemiTransparency = false;
 			int m_transparentPixelIndex = -1;
 			bool isGA = false, isNano = false;
 			double proportional = 1.0, ratio = .5, ratioY = .5;
@@ -38,6 +37,7 @@ namespace PnnLABQuant
 			bool quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const uint frameIndex, const bool dither);
 
 		protected:
+			bool hasSemiTransparency = false;
 			struct pnnbin {
 				float ac = 0, Lc = 0, Ac = 0, Bc = 0, err = 0;
 				float cnt = 0;
