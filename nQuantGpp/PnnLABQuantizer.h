@@ -21,17 +21,19 @@ namespace PnnLABQuant
 	// Use at your own risk!
 	// =============================================================
 
+	const double TRANS_RATE = 1 - (512 + 101) / 768.0;
+
 	class PnnLABQuantizer
 	{
 		private:
 			int m_transparentPixelIndex = -1;
 			bool isGA = false, isNano = false;
 			double proportional = 1.0, ratio = .5, ratioY = .5;
-			const double TRANS_RATE = 1 - (512 + 101) / 768.0;
+			
 			unordered_map<ARGB, CIELABConvertor::Lab> pixelMap;
 			unordered_map<int, vector<ushort> > closestMap;
-			unordered_map<int, ushort> nearestMap;			
-			
+			unordered_map<int, ushort> nearestMap;
+
 			ushort closestColorIndex(const Mat palette, const Vec4b& c, const uint pos);
 			ushort hybridColorIndex(const Mat palette, const Vec4b& c, const uint pos);
 			bool quantize_image(const Mat4b pixels, const Mat palette, const uint nMaxColors, Mat1b qPixels, const uint frameIndex, const bool dither);
